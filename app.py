@@ -3,19 +3,38 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-tasks = [
-    {
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Tylenol',
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web',
-        'done': False
-    }
+import docker, os
+client = docker.from_env()
+volume_root="/media/nfs/theia"
+
+os.system("docker ps -a -q  --filter ancestor=theia-python:aicots")
+
+def run_container(uuid, strategy_name, port):
+    os.system("mkdir -p " + volume_root + '/' + uuid)
+    os.system("tar -xf /root/builds/1_aicots/template/strategy-template.tar -C " + volume_root + '/' + uuid)
+    os.system("mv -f " + volume_root + '/' + uuid + '/strategy-template.py ' + volume_root + '/' + uuid + '/' + strategy_name + '.py')
+    client.containers.run(
+        'theia-python:aicots',
+        auto_remove=True,
+        detach=True,
+        name=uuid,
+        ports={'3000/tcp': port},
+        volumes={volume_root + '/' + uuid + '/': {'bind': '/home/project/', 'mode': 'rw'}}
+    )
+
+def stop_container(uuid):
+    client.containers.stop(
+        name=uuid
+    )
+
+containers = [
+  {
+    "port": 30000, 
+    "name": "my_strategy_a",
+    "status": "stop", 
+    "url": "http://192.168.233.136:30000", 
+    "uuid": "YJMDUH9zuwXf8c6KT2CDEV"
+  }
 ]
 
 #
@@ -41,69 +60,72 @@ from flask import make_response
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
-# curl -u aicots:85114481 -i http://127.0.0.1:5000/todo/api/v1.0/tasks
+# curl -u aicots:85114481 -i http://127.0.0.1:5000/api/v1.0/containers
 
-@app.route('/todo/api/v1.0/tasks', methods=['GET'])
+@app.route('/api/v1.0/containers', methods=['GET'])
 @auth.login_required
-def get_tasks():
-    return jsonify({'tasks': tasks})
+def get_containers():
+    return jsonify({'containers': containers})
 
-# curl -i http://localhost:5000/todo/api/v1.0/tasks/1
+# curl -i http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
 
 from flask import abort
 
-@app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['GET'])
-def get_task(task_id):
-    task = list(filter(lambda t: t['id'] == task_id, tasks))
-    if len(task) == 0:
+@app.route('/api/v1.0/containers/<uuid>', methods=['GET'])
+def get_container(uuid):
+    container = list(filter(lambda t: str(t['uuid']) == str(uuid), containers))
+    if len(container) == 0:
         abort(404)
-    return jsonify({'task': task[0]})
+    return jsonify({'container': container[0]})
 
-# curl -i -H "Content-Type: application/json" -X POST -d '{"title":"Read a book"}' http://localhost:5000/todo/api/v1.0/tasks
+# curl -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_b"}' http://localhost:5000/api/v1.0/containers
 
 from flask import request
+#import uuid
+import shortuuid
 
-@app.route('/todo/api/v1.0/tasks', methods=['POST'])
+@app.route('/api/v1.0/containers', methods=['POST'])
 def create_task():
-    if not request.json or not 'title' in request.json:
+    if not request.json or not 'name' in request.json:
         abort(400)
-    task = {
-        'id': tasks[-1]['id'] + 1,
-        'title': request.json['title'],
-        'description': request.json.get('description', ""),
-        'done': False
+    port = containers[-1]['port'] + 1 if len(containers) > 0 else 30000
+    container = {
+        'uuid': shortuuid.uuid(),
+        'name': request.json['name'],
+        'port': port,
+        'url': u'http://192.168.233.136:'+str(port),
+        'status': "stop"
     }
-    tasks.append(task)
-    return jsonify({'task': task}), 201
+    containers.append(container)
+    return jsonify({'container': container}), 201
 
-# curl -i -H "Content-Type: application/json" -X PUT -d '{"description":"Philosopher'\''s Stone"}' http://localhost:5000/todo/api/v1.0/tasks/3
+# curl -i -H "Content-Type: application/json" -X PUT -d '{"status":"start"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
 
-@app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
-def update_task(task_id):
-    task = list(filter(lambda t: t['id'] == task_id, tasks))
-    if len(task) == 0:
+@app.route('/api/v1.0/containers/<uuid>', methods=['PUT'])
+def update_container(uuid):
+    container = list(filter(lambda t: str(t['uuid']) == str(uuid), containers))
+    if len(container) == 0:
         abort(404)
     if not request.json:
         abort(400)
-    if 'title' in request.json and type(request.json['title']) != str:
+    if 'name' in request.json and type(request.json['name']) != str:
         abort(400)
-    if 'description' in request.json and type(request.json['description']) is not str:
+    if 'status' in request.json and type(request.json['status']) != str:
         abort(400)
-    if 'done' in request.json and type(request.json['done']) is not bool:
-        abort(400)
-    task[0]['title'] = request.json.get('title', task[0]['title'])
-    task[0]['description'] = request.json.get('description', task[0]['description'])
-    task[0]['done'] = request.json.get('done', task[0]['done'])
-    return jsonify({'task': task[0]})
+    container[0]['name'] = request.json.get('name', container[0]['name'])
+    container[0]['status'] = request.json.get('status', container[0]['status'])
+    run_container(container[0]['uuid'], container[0]['name'], container[0]['port'])
+    return jsonify({'container': container[0]})
 
-# curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/todo/api/v1.0/tasks/3
+# curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/containers/<uuid>
 
-@app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
-def delete_task(task_id):
-    task = list(filter(lambda t: t['id'] == task_id, tasks))
-    if len(task) == 0:
+@app.route('/api/v1.0/containers/<uuid>', methods=['DELETE'])
+def delete_container(uuid):
+    container = list(filter(lambda t: str(t['uuid']) == str(uuid), containers))
+    if len(container) == 0:
         abort(404)
-    tasks.remove(task[0])
+    stop_container(container[0]['uuid'])
+    containers.remove(container[0])
     return jsonify({'result': True})
 
 #
