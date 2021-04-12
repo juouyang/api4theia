@@ -17,15 +17,15 @@ def run_container(uid, sid, strategy_name, port):
             os.system("cd /root/builds/1_aicots/template/Strategy/; git pull")
             os.system("cp -rf /root/builds/1_aicots/template/Strategy/* " + folderpath)
             os.system("mv -f " + folderpath + '/Your_Strategy.py ' + folderpath + '/' + strategy_name + '.py')
-
-    client.containers.run(
-        'theia-python:aicots',
-        auto_remove=True,
-        detach=True,
-        name=sid,
-        ports={'3000/tcp': port},
-        volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
-    )
+    if len(client.containers.list(all=True, filters={'name': sid})) == 0:
+        client.containers.run(
+            'theia-python:aicots',
+            auto_remove=True,
+            detach=True,
+            name=sid,
+            ports={'3000/tcp': port},
+            volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
+        )
 
 def stop_container(sid):
     if len(client.containers.list(all=True, filters={'name': sid})) != 0:
@@ -120,7 +120,10 @@ def update_container(sid):
         abort(400)
     container[0]['name'] = request.json.get('name', container[0]['name'])
     container[0]['status'] = request.json.get('status', container[0]['status'])
-    run_container("aicots", container[0]['sid'], container[0]['name'], container[0]['port'])
+    if str(container[0]['status']) == "start":
+        run_container("aicots", container[0]['sid'], container[0]['name'], container[0]['port'])
+    else:
+        stop_container(container[0]['sid'])
     return jsonify({'container': container[0]})
 
 # curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/containers/<sid>
