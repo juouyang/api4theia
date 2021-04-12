@@ -7,25 +7,32 @@ import docker, os
 client = docker.from_env()
 volume_root="/media/nfs/theia"
 
-os.system("docker ps -a -q  --filter ancestor=theia-python:aicots")
+os.system("docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))")
 
-def run_container(uuid, strategy_name, port):
-    os.system("mkdir -p " + volume_root + '/' + uuid)
-    os.system("tar -xf /root/builds/1_aicots/template/strategy-template.tar -C " + volume_root + '/' + uuid)
-    os.system("mv -f " + volume_root + '/' + uuid + '/strategy-template.py ' + volume_root + '/' + uuid + '/' + strategy_name + '.py')
+def run_container(uid, sid, strategy_name, port):
+    folderpath = volume_root + '/' + uid + '/' + sid
+    if not os.path.isdir(folderpath):
+        os.system("mkdir -p " + folderpath)
+        if os.path.isdir("/root/builds/1_aicots/template/Strategy/"):
+            os.system("cd /root/builds/1_aicots/template/Strategy/; git pull")
+            os.system("cp -rf /root/builds/1_aicots/template/Strategy/* " + folderpath)
+            os.system("mv -f " + folderpath + '/Your_Strategy.py ' + folderpath + '/' + strategy_name + '.py')
+
     client.containers.run(
         'theia-python:aicots',
         auto_remove=True,
         detach=True,
-        name=uuid,
+        name=sid,
         ports={'3000/tcp': port},
-        volumes={volume_root + '/' + uuid + '/': {'bind': '/home/project/', 'mode': 'rw'}}
+        volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
     )
 
-def stop_container(uuid):
-    client.containers.stop(
-        name=uuid
-    )
+def stop_container(sid):
+    if len(client.containers.list(all=True, filters={'name': sid})) != 0:
+        container = client.containers.get(sid)
+        container.stop()
+        if len(client.containers.list(all=True, filters={'name': sid})) != 0:
+            container.remove()
 
 containers = [
   {
@@ -33,7 +40,7 @@ containers = [
     "name": "my_strategy_a",
     "status": "stop", 
     "url": "http://192.168.233.136:30000", 
-    "uuid": "YJMDUH9zuwXf8c6KT2CDEV"
+    "sid": "YJMDUH9zuwXf8c6KT2CDEV"
   }
 ]
 
@@ -71,9 +78,9 @@ def get_containers():
 
 from flask import abort
 
-@app.route('/api/v1.0/containers/<uuid>', methods=['GET'])
-def get_container(uuid):
-    container = list(filter(lambda t: str(t['uuid']) == str(uuid), containers))
+@app.route('/api/v1.0/containers/<sid>', methods=['GET'])
+def get_container(sid):
+    container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
     if len(container) == 0:
         abort(404)
     return jsonify({'container': container[0]})
@@ -81,7 +88,6 @@ def get_container(uuid):
 # curl -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_b"}' http://localhost:5000/api/v1.0/containers
 
 from flask import request
-#import uuid
 import shortuuid
 
 @app.route('/api/v1.0/containers', methods=['POST'])
@@ -90,7 +96,7 @@ def create_task():
         abort(400)
     port = containers[-1]['port'] + 1 if len(containers) > 0 else 30000
     container = {
-        'uuid': shortuuid.uuid(),
+        'sid': shortuuid.uuid(),
         'name': request.json['name'],
         'port': port,
         'url': u'http://192.168.233.136:'+str(port),
@@ -101,9 +107,9 @@ def create_task():
 
 # curl -i -H "Content-Type: application/json" -X PUT -d '{"status":"start"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
 
-@app.route('/api/v1.0/containers/<uuid>', methods=['PUT'])
-def update_container(uuid):
-    container = list(filter(lambda t: str(t['uuid']) == str(uuid), containers))
+@app.route('/api/v1.0/containers/<sid>', methods=['PUT'])
+def update_container(sid):
+    container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
     if len(container) == 0:
         abort(404)
     if not request.json:
@@ -114,17 +120,17 @@ def update_container(uuid):
         abort(400)
     container[0]['name'] = request.json.get('name', container[0]['name'])
     container[0]['status'] = request.json.get('status', container[0]['status'])
-    run_container(container[0]['uuid'], container[0]['name'], container[0]['port'])
+    run_container("aicots", container[0]['sid'], container[0]['name'], container[0]['port'])
     return jsonify({'container': container[0]})
 
-# curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/containers/<uuid>
+# curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/containers/<sid>
 
-@app.route('/api/v1.0/containers/<uuid>', methods=['DELETE'])
-def delete_container(uuid):
-    container = list(filter(lambda t: str(t['uuid']) == str(uuid), containers))
+@app.route('/api/v1.0/containers/<sid>', methods=['DELETE'])
+def delete_container(sid):
+    container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
     if len(container) == 0:
         abort(404)
-    stop_container(container[0]['uuid'])
+    stop_container(container[0]['sid'])
     containers.remove(container[0])
     return jsonify({'result': True})
 
