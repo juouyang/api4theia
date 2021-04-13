@@ -22,15 +22,51 @@ for container in client.containers.list(all=True, filters={'ancestor': service_i
     except docker.errors.APIError:
         app.logger.error("error when remove container")
 
+def run_container(uid, sid, strategy_name, port):
+    folderpath = volume_root + '/' + uid + '/' + sid
+    if not os.path.isdir(folderpath):
+        os.system("mkdir -p " + folderpath)
+        if os.path.isdir(template_dir):
+            os.system("cp -rf " + template_dir + "/* " + folderpath)
+            os.system("mv -f " + folderpath + '/Your_Strategy.py ' + folderpath + '/' + strategy_name + '.py')
+    else:
+        os.system("cp -rf " + template_dir + "/reference/ " + folderpath)
+        os.system("cp -rf " + template_dir + "/__main__.py " + folderpath)
+
+    if len(client.containers.list(all=True, filters={'name': sid})) == 0:
+        client.containers.run(
+            service_image,
+            auto_remove=True,
+            detach=True,
+            name=sid,
+            ports={'3000/tcp': port},
+            volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
+        )
+
+def remove_container(sid):
+    try:
+        if len(client.containers.list(all=True, filters={'name': sid})) != 0:
+            container = client.containers.get(sid)
+            container.stop()
+            if len(client.containers.list(all=True, filters={'name': sid})) != 0:
+                container.remove()
+    except:
+        app.logger.error("error when stop container")
+
+def cleanup_volume(uid, sid):
+    folderpath = volume_root + '/' + uid + '/' + sid
+    remove_container(sid)
+    os.system("rm -rf " + folderpath)
+
 #
 
 containers = [
   {
     "port": service_port, 
     "name": "my_strategy_a",
-    "status": "stop", 
     "url": "http://" + service_addr + ":" + str(service_port), 
-    "sid": "YJMDUH9zuwXf8c6KT2CDEV"
+    "sid": "YJMDUH9zuwXf8c6KT2CDEV",
+    "status": "not running"
   }
 ]
 
@@ -90,41 +126,13 @@ def create_task():
         'name': request.json['name'],
         'port': port,
         'url': u'http://' + service_addr + ':' + str(port),
-        'status': "stop"
+        'status': "not running"
     }
     containers.append(container)
     return jsonify({'container': container}), 201
 
-# curl -i -H "Content-Type: application/json" -X PUT -d '{"status":"start"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
-# curl -i -H "Content-Type: application/json" -X PUT -d '{"status":"stop"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
-
-def run_container(uid, sid, strategy_name, port):
-    folderpath = volume_root + '/' + uid + '/' + sid
-    if not os.path.isdir(folderpath):
-        os.system("mkdir -p " + folderpath)
-        if os.path.isdir(template_dir):
-            os.system("cp -rf " + template_dir + "/* " + folderpath)
-            os.system("mv -f " + folderpath + '/Your_Strategy.py ' + folderpath + '/' + strategy_name + '.py')
-    else:
-        os.system("cp -rf " + template_dir + "/reference/ " + folderpath)
-        os.system("cp -rf " + template_dir + "/__main__.py " + folderpath)
-
-    if len(client.containers.list(all=True, filters={'name': sid})) == 0:
-        client.containers.run(
-            service_image,
-            auto_remove=True,
-            detach=True,
-            name=sid,
-            ports={'3000/tcp': port},
-            volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
-        )
-
-def stop_container(sid):
-    if len(client.containers.list(all=True, filters={'name': sid})) != 0:
-        container = client.containers.get(sid)
-        container.stop()
-        if len(client.containers.list(all=True, filters={'name': sid})) != 0:
-            container.remove()
+# curl -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
+# curl -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
 
 @app.route('/api/v1.0/containers/<sid>', methods=['PUT'])
 def update_container(sid):
@@ -135,24 +143,28 @@ def update_container(sid):
         abort(400)
     if 'name' in request.json and type(request.json['name']) != str:
         abort(400)
-    if 'status' in request.json and type(request.json['status']) != str:
+    if 'action' in request.json and type(request.json['action']) != str:
         abort(400)
     container[0]['name'] = request.json.get('name', container[0]['name'])
-    container[0]['status'] = request.json.get('status', container[0]['status'])
-    if str(container[0]['status']) == "start":
+
+    if request.json['action'] == "start":
         run_container("aicots", container[0]['sid'], container[0]['name'], container[0]['port'])
+        container[0]['status'] = "running"
     else:
-        stop_container(container[0]['sid'])
+        if request.json['action'] == "stop":
+            remove_container(container[0]['sid'])
+            container[0]['status'] = "not running"
     return jsonify({'container': container[0]})
 
 # curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/containers/<sid>
 
 @app.route('/api/v1.0/containers/<sid>', methods=['DELETE'])
 def delete_container(sid):
+    cleanup_volume("aicots", sid)
+
     container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
     if len(container) == 0:
-        abort(404)
-    stop_container(container[0]['sid'])
+        abort(404) 
     containers.remove(container[0])
     return jsonify({'result': True})
 
