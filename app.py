@@ -4,46 +4,32 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 import docker, os
+
 client = docker.from_env()
-volume_root="/media/nfs/theia"
-service_addr="192.168.233.136"
+volume_root = "/media/nfs/theia"
+service_image = "theia-python:aicots"
+service_addr = "192.168.233.136"
+service_port = 30000
+template_dir = "/root/builds/1_aicots/template/0.1/Strategy"
 
-os.system("docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))")
-
-def run_container(uid, sid, strategy_name, port):
-    folderpath = volume_root + '/' + uid + '/' + sid
-    if not os.path.isdir(folderpath):
-        os.system("mkdir -p " + folderpath)
-        if os.path.isdir("/root/builds/1_aicots/template/v0.1/"):
-            os.system("cp -rf /root/builds/1_aicots/template/v0.1/Strategy/* " + folderpath)
-            os.system("mv -f " + folderpath + '/Your_Strategy.py ' + folderpath + '/' + strategy_name + '.py')
-    else:
-        os.system("cp -rf /root/builds/1_aicots/template/v0.1/Strategy/reference/ " + folderpath)
-        os.system("cp -rf /root/builds/1_aicots/template/v0.1/Strategy/__main__.py " + folderpath)
-
-    if len(client.containers.list(all=True, filters={'name': sid})) == 0:
-        client.containers.run(
-            'theia-python:aicots',
-            auto_remove=True,
-            detach=True,
-            name=sid,
-            ports={'3000/tcp': port},
-            volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
-        )
-
-def stop_container(sid):
-    if len(client.containers.list(all=True, filters={'name': sid})) != 0:
-        container = client.containers.get(sid)
+# docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
+for container in client.containers.list(all=True, filters={'ancestor': service_image}):
+    try:
+        cid = container.attrs.get(id)
         container.stop()
-        if len(client.containers.list(all=True, filters={'name': sid})) != 0:
+        if len(client.containers.list(all=True, filters={'id': cid})) != 0:
             container.remove()
+    except docker.errors.APIError:
+        app.logger.error("error when remove container")
+
+#
 
 containers = [
   {
-    "port": 30000, 
+    "port": service_port, 
     "name": "my_strategy_a",
     "status": "stop", 
-    "url": "http://" + service_addr + ":30000", 
+    "url": "http://" + service_addr + ":" + str(service_port), 
     "sid": "YJMDUH9zuwXf8c6KT2CDEV"
   }
 ]
@@ -98,7 +84,7 @@ import shortuuid
 def create_task():
     if not request.json or not 'name' in request.json:
         abort(400)
-    port = containers[-1]['port'] + 1 if len(containers) > 0 else 30000
+    port = containers[-1]['port'] + 1 if len(containers) > 0 else service_port
     container = {
         'sid': shortuuid.uuid(),
         'name': request.json['name'],
@@ -111,6 +97,34 @@ def create_task():
 
 # curl -i -H "Content-Type: application/json" -X PUT -d '{"status":"start"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
 # curl -i -H "Content-Type: application/json" -X PUT -d '{"status":"stop"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
+
+def run_container(uid, sid, strategy_name, port):
+    folderpath = volume_root + '/' + uid + '/' + sid
+    if not os.path.isdir(folderpath):
+        os.system("mkdir -p " + folderpath)
+        if os.path.isdir(template_dir):
+            os.system("cp -rf " + template_dir + "/* " + folderpath)
+            os.system("mv -f " + folderpath + '/Your_Strategy.py ' + folderpath + '/' + strategy_name + '.py')
+    else:
+        os.system("cp -rf " + template_dir + "/reference/ " + folderpath)
+        os.system("cp -rf " + template_dir + "/__main__.py " + folderpath)
+
+    if len(client.containers.list(all=True, filters={'name': sid})) == 0:
+        client.containers.run(
+            service_image,
+            auto_remove=True,
+            detach=True,
+            name=sid,
+            ports={'3000/tcp': port},
+            volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
+        )
+
+def stop_container(sid):
+    if len(client.containers.list(all=True, filters={'name': sid})) != 0:
+        container = client.containers.get(sid)
+        container.stop()
+        if len(client.containers.list(all=True, filters={'name': sid})) != 0:
+            container.remove()
 
 @app.route('/api/v1.0/containers/<sid>', methods=['PUT'])
 def update_container(sid):
