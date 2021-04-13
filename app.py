@@ -1,11 +1,12 @@
 #!venv/bin/python
-from flask import Flask, jsonify
+from flask import Flask
 
 app = Flask(__name__)
 
 import docker, os
 client = docker.from_env()
 volume_root="/media/nfs/theia"
+service_addr="192.168.233.136"
 
 os.system("docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))")
 
@@ -39,13 +40,14 @@ containers = [
     "port": 30000, 
     "name": "my_strategy_a",
     "status": "stop", 
-    "url": "http://192.168.233.136:30000", 
+    "url": "http://" + service_addr + ":30000", 
     "sid": "YJMDUH9zuwXf8c6KT2CDEV"
   }
 ]
 
 #
 
+import jsonify
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
@@ -99,7 +101,7 @@ def create_task():
         'sid': shortuuid.uuid(),
         'name': request.json['name'],
         'port': port,
-        'url': u'http://192.168.233.136:'+str(port),
+        'url': u'http://' + service_addr + ':' + str(port),
         'status': "stop"
     }
     containers.append(container)
