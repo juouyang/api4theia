@@ -1,5 +1,5 @@
 #!venv/bin/python
-from flask import Flask
+from flask import Flask, jsonify
 
 app = Flask(__name__)
 
@@ -14,10 +14,13 @@ def run_container(uid, sid, strategy_name, port):
     folderpath = volume_root + '/' + uid + '/' + sid
     if not os.path.isdir(folderpath):
         os.system("mkdir -p " + folderpath)
-        if os.path.isdir("/root/builds/1_aicots/template/Strategy/"):
-            os.system("cd /root/builds/1_aicots/template/Strategy/; git pull")
-            os.system("cp -rf /root/builds/1_aicots/template/Strategy/* " + folderpath)
+        if os.path.isdir("/root/builds/1_aicots/template/v0.1/"):
+            os.system("cp -rf /root/builds/1_aicots/template/v0.1/Strategy/* " + folderpath)
             os.system("mv -f " + folderpath + '/Your_Strategy.py ' + folderpath + '/' + strategy_name + '.py')
+    else:
+        os.system("cp -rf /root/builds/1_aicots/template/v0.1/Strategy/reference/ " + folderpath)
+        os.system("cp -rf /root/builds/1_aicots/template/v0.1/Strategy/__main__.py " + folderpath)
+
     if len(client.containers.list(all=True, filters={'name': sid})) == 0:
         client.containers.run(
             'theia-python:aicots',
@@ -47,7 +50,6 @@ containers = [
 
 #
 
-import jsonify
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
@@ -108,6 +110,7 @@ def create_task():
     return jsonify({'container': container}), 201
 
 # curl -i -H "Content-Type: application/json" -X PUT -d '{"status":"start"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
+# curl -i -H "Content-Type: application/json" -X PUT -d '{"status":"stop"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
 
 @app.route('/api/v1.0/containers/<sid>', methods=['PUT'])
 def update_container(sid):
