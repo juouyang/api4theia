@@ -17,7 +17,7 @@ service_addr = "192.168.233.136"
 service_port = 30000
 users = [
     {
-        "name": "admin",
+        "uid": "admin",
         "password": "85114481",
         "is_admin": True,
         "strategies": [
@@ -26,7 +26,7 @@ users = [
         ]
     },
     {
-        "name": "user1",
+        "uid": "user1",
         "password": "85114481",
         "is_admin": False,
         "strategies": [
@@ -110,14 +110,14 @@ auth = HTTPBasicAuth()
 
 @auth.get_password
 def get_password(username):
-    user = list(filter(lambda t: str(t['name']) == str(username), users))
+    user = list(filter(lambda t: str(t['uid']) == str(username), users))
     if len(user) == 0:
         return None
     return user[0]['password']
 
 @auth.get_user_roles
 def get_basic_role(username):
-    user = list(filter(lambda t: str(t['name']) == str(username), users))
+    user = list(filter(lambda t: str(t['uid']) == str(username), users))
     if user[0]['is_admin']:
         return ['Admin']
 
@@ -144,7 +144,7 @@ def get_all_strategies():
 @auth.login_required()
 def get_strategies():
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['name']) == str(username), users))
+    user = list(filter(lambda t: str(t['uid']) == str(username), users))
     sid_list = user[0]['strategies']
     strategy_list = list(filter(lambda t: str(t['sid']) in sid_list, strategies))
     return jsonify({'strategies': strategy_list})
@@ -160,7 +160,7 @@ def create_strategy():
     sid = shortuuid.uuid()
 
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['name']) == str(username), users))
+    user = list(filter(lambda t: str(t['uid']) == str(username), users))
     if len(user[0]['strategies']) >= 3:
         abort(make_response(jsonify(error="the service has reached its maximum number of container instances for username = "+username), 429))
 
@@ -177,14 +177,20 @@ def create_strategy():
 
 # curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
 # curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
 # curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
 # curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
 # curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
 @app.route('/api/v1.0/strategies/<sid>', methods=['PUT'])
 @auth.login_required()
 def update_strategy(sid):
+    uid = auth.current_user() 
+    user = list(filter(lambda t: str(t['uid']) == str(uid), users))
+    if (not sid in user[0]['strategies']) and (user[0]['is_admin'] != True):
+        abort(404)
+
     strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
     if len(strategy) == 0:
         abort(404)
@@ -196,24 +202,27 @@ def update_strategy(sid):
         abort(400)
     strategy[0]['name'] = request.json.get('name', strategy[0]['name'])
 
-    username = auth.current_user()
-    user = list(filter(lambda t: str(t['name']) == str(username), users))  
-    if str(sid) in user[0]['strategies'] or user[0]['is_admin'] == True:
-        if request.json['action'] == "start":
-            run_container(auth.current_user(), strategy[0]['sid'], strategy[0]['name'], strategy[0]['port'])
-            strategy[0]['theia'] = "running"
-        else:
-            if request.json['action'] == "stop":
-                remove_container(strategy[0]['sid'])
-                strategy[0]['theia'] = "not running"
-        return jsonify({'strategy': strategy[0]})
-    abort(404)
+    real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
+    if request.json['action'] == "start":
+        run_container(real_user[0]['uid'], strategy[0]['sid'], strategy[0]['name'], strategy[0]['port'])
+        strategy[0]['theia'] = "running"
+    elif request.json['action'] == "stop":
+        remove_container(strategy[0]['sid'])
+        strategy[0]['theia'] = "not running"
+    return jsonify({'strategy': strategy[0]})
 
-# curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/<sid>
+# curl -u user1:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
+# curl -u user1:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
 @app.route('/api/v1.0/strategies/<sid>', methods=['DELETE'])
+@auth.login_required()
 def delete_strategy(sid):
-    cleanup_volume("aicots", sid)
-
+    uid = auth.current_user() 
+    user = list(filter(lambda t: str(t['uid']) == str(uid), users))
+    if not sid in user[0]['strategies']:
+        abort(404)
+    cleanup_volume(uid, sid)  
     strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
     if len(strategy) == 0:
         abort(404) 
