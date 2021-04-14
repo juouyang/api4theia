@@ -1,16 +1,62 @@
 #!venv/bin/python
 from flask import Flask, jsonify
+from flask_httpauth import HTTPBasicAuth
+from flask import make_response
+from flask import abort
+from flask import request
+import shortuuid
+import docker, os
 
 app = Flask(__name__)
 
-import docker, os
-
 client = docker.from_env()
 volume_root = "/media/nfs/theia"
+template_dir = "/root/builds/1_aicots/template/0.1/Strategy"
 service_image = "theia-python:aicots"
 service_addr = "192.168.233.136"
 service_port = 30000
-template_dir = "/root/builds/1_aicots/template/0.1/Strategy"
+users = [
+    {
+        "name": "admin",
+        "password": "85114481",
+        "is_admin": True,
+        "strategies": [
+            "YJMDUH9zuwXf8c6KT2CDEV",
+            "oMTmLAhDhNAArmp8Go64Hu"
+        ]
+    },
+    {
+        "name": "user1",
+        "password": "85114481",
+        "is_admin": False,
+        "strategies": [
+            "9JYN5ycAEfoVNTkFxFQQxW"
+        ]
+    }
+]
+containers = [
+    {
+        "port": service_port,
+        "name": "my_strategy_a",
+        "url": "http://" + service_addr + ":" + str(service_port),
+        "sid": "YJMDUH9zuwXf8c6KT2CDEV",
+        "status": "not running"
+    },
+    {
+        "port": service_port+1,
+        "name": "my_strategy_b",
+        "url": "http://" + service_addr + ":" + str(service_port),
+        "sid": "oMTmLAhDhNAArmp8Go64Hu",
+        "status": "not running"
+    },
+    {
+        "port": service_port+2,
+        "name": "my_strategy_a",
+        "url": "http://" + service_addr + ":" + str(service_port),
+        "sid": "9JYN5ycAEfoVNTkFxFQQxW",
+        "status": "not running"
+    }
+]
 
 # docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
 for container in client.containers.list(all=True, filters={'ancestor': service_image}):
@@ -60,64 +106,53 @@ def cleanup_volume(uid, sid):
 
 #
 
-containers = [
-  {
-    "port": service_port, 
-    "name": "my_strategy_a",
-    "url": "http://" + service_addr + ":" + str(service_port), 
-    "sid": "YJMDUH9zuwXf8c6KT2CDEV",
-    "status": "not running"
-  }
-]
-
-#
-
-from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
 @auth.get_password
 def get_password(username):
-    if username == 'aicots':
-        return '85114481'
-    return None
+    user = list(filter(lambda t: str(t['name']) == str(username), users))
+    if len(user) == 0:
+        return None
+    return user[0]['password']
+
+@auth.get_user_roles
+def get_basic_role(username):
+    user = list(filter(lambda t: str(t['name']) == str(username), users))
+    if user[0]['is_admin']:
+        return ['Admin']
 
 @auth.error_handler
 def unauthorized():
     return make_response(jsonify({'error': 'Unauthorized access'}), 401)
 
-#
-
-from flask import make_response
-
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
-# curl -u aicots:85114481 -i http://127.0.0.1:5000/api/v1.0/containers
+#
 
-@app.route('/api/v1.0/containers', methods=['GET'])
-@auth.login_required
-def get_containers():
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/containers/all
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/containers/all
+@app.route('/api/v1.0/containers/all', methods=['GET'])
+@auth.login_required(role='Admin')
+def get_all_containers():
     return jsonify({'containers': containers})
 
-# curl -i http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/containers
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/containers
+@app.route('/api/v1.0/containers', methods=['GET'])
+@auth.login_required()
+def get_strategies():
+    username = auth.current_user()
+    user = list(filter(lambda t: str(t['name']) == str(username), users))
+    sid_list = user[0]['strategies']
+    container_list = list(filter(lambda t: str(t['sid']) in sid_list, containers))
+    return jsonify({'containers': container_list})
 
-from flask import abort
-
-@app.route('/api/v1.0/containers/<sid>', methods=['GET'])
-def get_container(sid):
-    container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
-    if len(container) == 0:
-        abort(404)
-    return jsonify({'container': container[0]})
-
-# curl -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_b"}' http://localhost:5000/api/v1.0/containers
-
-from flask import request
-import shortuuid
-
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/containers
 @app.route('/api/v1.0/containers', methods=['POST'])
-def create_task():
+@auth.login_required()
+def create_strategy():
     if not request.json or not 'name' in request.json:
         abort(400)
     port = containers[-1]['port'] + 1 if len(containers) > 0 else service_port
@@ -133,9 +168,8 @@ def create_task():
 
 # curl -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
 # curl -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
-
 @app.route('/api/v1.0/containers/<sid>', methods=['PUT'])
-def update_container(sid):
+def update_strategy(sid):
     container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
     if len(container) == 0:
         abort(404)
@@ -157,9 +191,8 @@ def update_container(sid):
     return jsonify({'container': container[0]})
 
 # curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/containers/<sid>
-
 @app.route('/api/v1.0/containers/<sid>', methods=['DELETE'])
-def delete_container(sid):
+def delete_strategy(sid):
     cleanup_volume("aicots", sid)
 
     container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
