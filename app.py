@@ -34,27 +34,27 @@ users = [
         ]
     }
 ]
-containers = [
+strategies = [
     {
         "port": service_port,
         "name": "my_strategy_a",
         "url": "http://" + service_addr + ":" + str(service_port),
         "sid": "YJMDUH9zuwXf8c6KT2CDEV",
-        "status": "not running"
+        "theia": "not running"
     },
     {
         "port": service_port+1,
         "name": "my_strategy_b",
-        "url": "http://" + service_addr + ":" + str(service_port),
+        "url": "http://" + service_addr + ":" + str(service_port+1),
         "sid": "oMTmLAhDhNAArmp8Go64Hu",
-        "status": "not running"
+        "theia": "not running"
     },
     {
         "port": service_port+2,
         "name": "my_strategy_a",
-        "url": "http://" + service_addr + ":" + str(service_port),
+        "url": "http://" + service_addr + ":" + str(service_port+2),
         "sid": "9JYN5ycAEfoVNTkFxFQQxW",
-        "status": "not running"
+        "theia": "not running"
     }
 ]
 
@@ -131,47 +131,62 @@ def not_found(error):
 
 #
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/containers/all
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/containers/all
-@app.route('/api/v1.0/containers/all', methods=['GET'])
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
+@app.route('/api/v1.0/strategies/all', methods=['GET'])
 @auth.login_required(role='Admin')
-def get_all_containers():
-    return jsonify({'containers': containers})
+def get_all_strategies():
+    return jsonify({'strategies': strategies})
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/containers
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/containers
-@app.route('/api/v1.0/containers', methods=['GET'])
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies
+@app.route('/api/v1.0/strategies', methods=['GET'])
 @auth.login_required()
 def get_strategies():
     username = auth.current_user()
     user = list(filter(lambda t: str(t['name']) == str(username), users))
     sid_list = user[0]['strategies']
-    container_list = list(filter(lambda t: str(t['sid']) in sid_list, containers))
-    return jsonify({'containers': container_list})
+    strategy_list = list(filter(lambda t: str(t['sid']) in sid_list, strategies))
+    return jsonify({'strategies': strategy_list})
 
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/containers
-@app.route('/api/v1.0/containers', methods=['POST'])
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/strategies
+@app.route('/api/v1.0/strategies', methods=['POST'])
 @auth.login_required()
 def create_strategy():
     if not request.json or not 'name' in request.json:
-        abort(400)
-    port = containers[-1]['port'] + 1 if len(containers) > 0 else service_port
-    container = {
-        'sid': shortuuid.uuid(),
+        abort(make_response(jsonify(error="the request should contain strategy name"), 400))
+
+    port = strategies[-1]['port'] + 1 if len(strategies) > 0 else service_port
+    sid = shortuuid.uuid()
+
+    username = auth.current_user()
+    user = list(filter(lambda t: str(t['name']) == str(username), users))
+    if len(user[0]['strategies']) >= 3:
+        abort(make_response(jsonify(error="the service has reached its maximum number of container instances for username = "+username), 429))
+
+    user[0]['strategies'].append(sid)  
+    strategy = {
+        'sid': sid,
         'name': request.json['name'],
         'port': port,
         'url': u'http://' + service_addr + ':' + str(port),
-        'status': "not running"
+        'theia': "not running"
     }
-    containers.append(container)
-    return jsonify({'container': container}), 201
+    strategies.append(strategy)
+    return jsonify({'strategy': strategy}), 201
 
-# curl -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
-# curl -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/containers/YJMDUH9zuwXf8c6KT2CDEV
-@app.route('/api/v1.0/containers/<sid>', methods=['PUT'])
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
+# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
+# curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
+# curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
+@app.route('/api/v1.0/strategies/<sid>', methods=['PUT'])
+@auth.login_required()
 def update_strategy(sid):
-    container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
-    if len(container) == 0:
+    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
+    if len(strategy) == 0:
         abort(404)
     if not request.json:
         abort(400)
@@ -179,26 +194,30 @@ def update_strategy(sid):
         abort(400)
     if 'action' in request.json and type(request.json['action']) != str:
         abort(400)
-    container[0]['name'] = request.json.get('name', container[0]['name'])
+    strategy[0]['name'] = request.json.get('name', strategy[0]['name'])
 
-    if request.json['action'] == "start":
-        run_container("aicots", container[0]['sid'], container[0]['name'], container[0]['port'])
-        container[0]['status'] = "running"
-    else:
-        if request.json['action'] == "stop":
-            remove_container(container[0]['sid'])
-            container[0]['status'] = "not running"
-    return jsonify({'container': container[0]})
+    username = auth.current_user()
+    user = list(filter(lambda t: str(t['name']) == str(username), users))  
+    if str(sid) in user[0]['strategies'] or user[0]['is_admin'] == True:
+        if request.json['action'] == "start":
+            run_container(auth.current_user(), strategy[0]['sid'], strategy[0]['name'], strategy[0]['port'])
+            strategy[0]['theia'] = "running"
+        else:
+            if request.json['action'] == "stop":
+                remove_container(strategy[0]['sid'])
+                strategy[0]['theia'] = "not running"
+        return jsonify({'strategy': strategy[0]})
+    abort(404)
 
-# curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/containers/<sid>
-@app.route('/api/v1.0/containers/<sid>', methods=['DELETE'])
+# curl -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/<sid>
+@app.route('/api/v1.0/strategies/<sid>', methods=['DELETE'])
 def delete_strategy(sid):
     cleanup_volume("aicots", sid)
 
-    container = list(filter(lambda t: str(t['sid']) == str(sid), containers))
-    if len(container) == 0:
+    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
+    if len(strategy) == 0:
         abort(404) 
-    containers.remove(container[0])
+    strategies.remove(strategy[0])
     return jsonify({'result': True})
 
 #
