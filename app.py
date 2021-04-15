@@ -7,6 +7,10 @@ from flask import request
 from flask import render_template
 import shortuuid
 import docker, os
+import logging
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 
@@ -170,7 +174,6 @@ def get_strategies():
 @auth.login_required()
 def get_strategy(sid):
     username = auth.current_user()
-    app.logger.info(username)
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     sid_list = user[0]['strategies']
     strategy_list = list(filter(lambda t: str(t['sid']) == sid and str(t['sid']) in sid_list, strategies))
@@ -186,7 +189,6 @@ def get_strategy(sid):
 @auth.login_required()
 def get_strategy_field(sid, key):
     username = auth.current_user()
-    app.logger.info(username)
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     sid_list = user[0]['strategies']
     strategy_list = list(filter(lambda t: str(t['sid']) == sid and str(t['sid']) in sid_list, strategies))
@@ -278,4 +280,4 @@ def delete_strategy(sid):
 #
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port='5000', debug=True)
