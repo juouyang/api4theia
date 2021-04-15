@@ -227,6 +227,7 @@ def delete_strategy(sid):
     if len(strategy) == 0:
         abort(404) 
     strategies.remove(strategy[0])
+    user[0]['strategies'].remove(sid);
     return jsonify({'result': True})
 
 #
