@@ -13,7 +13,7 @@ def test_get_all_strategies():
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 401
 
-def test_get_strategies_of_user():
+def test_get_strategies_of_a_user():
     response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies")
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
@@ -26,7 +26,24 @@ def test_get_strategies_of_user():
     resp_body = response.json()
     assert len(resp_body['strategies']) == 1
 
-def test_get_strategy_field_by_key():
+def test_get_strategy_by_sid():
+    response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+
+    response = requests.get("http://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 404
+
+    response = requests.get("http://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+
+    response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 404
+
+def test_get_strategy_field_by_sid_and_key():
     response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name")
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200

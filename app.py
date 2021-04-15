@@ -5,6 +5,7 @@ from flask import make_response
 from flask import abort
 from flask import request
 from flask import render_template
+import json
 import shortuuid
 import docker, os
 import logging
@@ -20,48 +21,14 @@ template_dir = "/root/builds/1_aicots/template/0.1/Strategy"
 service_image = "theia-python:aicots"
 service_addr = "192.168.233.136"
 service_port = 30000
-users = [
-    {
-        "username": "admin",
-        "password": "85114481",
-        "is_admin": True,
-        "strategies": [
-            "YJMDUH9zuwXf8c6KT2CDEV",
-            "oMTmLAhDhNAArmp8Go64Hu"
-        ]
-    },
-    {
-        "username": "user1",
-        "password": "85114481",
-        "is_admin": False,
-        "strategies": [
-            "9JYN5ycAEfoVNTkFxFQQxW"
-        ]
-    }
-]
-strategies = [
-    {
-        "sid": "YJMDUH9zuwXf8c6KT2CDEV",
-        "port": service_port,
-        "name": "my_strategy_a",
-        "url": "http://" + service_addr + ":" + str(service_port),
-        "theia": "not running"
-    },
-    {
-        "sid": "oMTmLAhDhNAArmp8Go64Hu",
-        "port": service_port+1,
-        "name": "my_strategy_b",
-        "url": "http://" + service_addr + ":" + str(service_port+1),
-        "theia": "not running"
-    },
-    {
-        "sid": "9JYN5ycAEfoVNTkFxFQQxW",
-        "port": service_port+2,
-        "name": "my_strategy_a",
-        "url": "http://" + service_addr + ":" + str(service_port+2),
-        "theia": "not running"
-    }
-]
+
+f = open('users.json')
+users = json.load(f)
+f.close()
+
+f = open('strategies.json')
+strategies = json.load(f)
+f.close()
 
 # docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
 for container in client.containers.list(all=True, filters={'ancestor': service_image}):
@@ -166,10 +133,10 @@ def get_strategies():
     strategy_list = list(filter(lambda t: str(t['sid']) in sid_list, strategies))
     return jsonify({'strategies': strategy_list})
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/url
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/name
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV
 @app.route('/api/v1.0/strategy/<sid>', methods=['GET'])
 @auth.login_required()
 def get_strategy(sid):
@@ -211,7 +178,9 @@ def create_strategy():
     if len(user[0]['strategies']) >= 3:
         abort(make_response(jsonify(error="the service has reached its maximum number of container instances for username = "+username), 429))
 
-    user[0]['strategies'].append(sid)  
+    user[0]['strategies'].append(sid)
+    with open('users.json', 'w') as f:
+        json.dump(users, f)
     strategy = {
         'sid': sid,
         'name': request.json['name'],
@@ -220,6 +189,8 @@ def create_strategy():
         'theia': "not running"
     }
     strategies.append(strategy)
+    with open('strategies.json', 'w') as f:
+        json.dump(strategies, f)
     return jsonify({'strategy': strategy}), 201
 
 # curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
@@ -274,7 +245,11 @@ def delete_strategy(sid):
     if len(strategy) == 0:
         abort(404) 
     strategies.remove(strategy[0])
+    with open('strategies.json', 'w') as f:
+        json.dump(strategies, f)
     user[0]['strategies'].remove(sid);
+    with open('users.json', 'w') as f:
+        json.dump(users, f)
     return jsonify({'result': True})
 
 #
