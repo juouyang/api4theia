@@ -5,13 +5,14 @@ from flask import make_response
 from flask import abort
 from flask import request
 from flask import render_template
+from flask import g
 import json
 import shortuuid
 import docker, os
 import logging
 
 log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+#log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 
@@ -103,17 +104,24 @@ def not_found(error):
 
 #
 
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/users/html
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/users/html
+@app.route('/api/v1.0/users/html', methods=['GET'])
+@auth.login_required(role='Admin')
+def get_all_users_html():
+    return render_template('users.html', users=users)
+    #username_list = [temp_dict['username'] for temp_dict in users]
+    #return render_template('users.html', users=username_list)
+
 # curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/users
 # curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/users
 @app.route('/api/v1.0/users', methods=['GET'])
 @auth.login_required(role='Admin')
 def get_all_users():
     return jsonify({'users': users})
-    return render_template('users.html', users=users)
-
     #username_list = [temp_dict['username'] for temp_dict in users]
     #return jsonify({'users': username_list})
-    #return render_template('users.html', users=username_list)
+
 
 # curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
 # curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
@@ -121,6 +129,18 @@ def get_all_users():
 @auth.login_required(role='Admin')
 def get_all_strategies():
     return jsonify({'strategies': strategies})
+
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/html
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/html
+@app.route('/api/v1.0/strategies/html', methods=['GET'])
+@auth.login_required()
+def get_strategies_html():
+    username = auth.current_user()
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    sid_list = user[0]['strategies']
+    strategy_list = list(filter(lambda t: str(t['sid']) in sid_list, strategies))
+    g.user = user[0]
+    return render_template('strategies.html', strategies=strategy_list)
 
 # curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies
 # curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies
