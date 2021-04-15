@@ -132,6 +132,13 @@ def not_found(error):
 
 #
 
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/users
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/users
+@app.route('/api/v1.0/users', methods=['GET'])
+@auth.login_required(role='Admin')
+def get_all_uid():
+    return jsonify({'usernames': users})
+
 # curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
 # curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
 @app.route('/api/v1.0/strategies/all', methods=['GET'])
