@@ -36,24 +36,25 @@ users = [
 ]
 strategies = [
     {
+        "sid": "YJMDUH9zuwXf8c6KT2CDEV",
         "port": service_port,
         "name": "my_strategy_a",
         "url": "http://" + service_addr + ":" + str(service_port),
-        "sid": "YJMDUH9zuwXf8c6KT2CDEV",
+        
         "theia": "not running"
     },
     {
+        "sid": "oMTmLAhDhNAArmp8Go64Hu",
         "port": service_port+1,
         "name": "my_strategy_b",
         "url": "http://" + service_addr + ":" + str(service_port+1),
-        "sid": "oMTmLAhDhNAArmp8Go64Hu",
         "theia": "not running"
     },
     {
+        "sid": "9JYN5ycAEfoVNTkFxFQQxW",
         "port": service_port+2,
         "name": "my_strategy_a",
         "url": "http://" + service_addr + ":" + str(service_port+2),
-        "sid": "9JYN5ycAEfoVNTkFxFQQxW",
         "theia": "not running"
     }
 ]
@@ -148,6 +149,38 @@ def get_strategies():
     sid_list = user[0]['strategies']
     strategy_list = list(filter(lambda t: str(t['sid']) in sid_list, strategies))
     return jsonify({'strategies': strategy_list})
+
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/url
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/name
+@app.route('/api/v1.0/strategy/<sid>', methods=['GET'])
+@auth.login_required()
+def get_strategy(sid):
+    username = auth.current_user()
+    app.logger.info(username)
+    user = list(filter(lambda t: str(t['uid']) == str(username), users))
+    sid_list = user[0]['strategies']
+    strategy_list = list(filter(lambda t: str(t['sid']) == sid and str(t['sid']) in sid_list, strategies))
+    if len(strategy_list) > 0:
+        return jsonify({"strategy": strategy_list[0]})
+    abort(404)
+
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url
+# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/url
+# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/name
+@app.route('/api/v1.0/strategy/<sid>/<key>', methods=['GET'])
+@auth.login_required()
+def get_strategy_field(sid, key):
+    username = auth.current_user()
+    app.logger.info(username)
+    user = list(filter(lambda t: str(t['uid']) == str(username), users))
+    sid_list = user[0]['strategies']
+    strategy_list = list(filter(lambda t: str(t['sid']) == sid and str(t['sid']) in sid_list, strategies))
+    if len(strategy_list) > 0 and key in strategy_list[0].keys():
+        return jsonify({key: strategy_list[0][key]})
+    abort(404)
 
 # curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/strategies
 @app.route('/api/v1.0/strategies', methods=['POST'])

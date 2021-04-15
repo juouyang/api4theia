@@ -2,8 +2,7 @@ import pytest
 import requests
 import json
 
-@pytest.mark.order(1)
-def test_get_all_strategies_by_admin_equals_200():
+def test_get_all_strategies():
     response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies/all")
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
@@ -14,8 +13,7 @@ def test_get_all_strategies_by_admin_equals_200():
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 401
 
-@pytest.mark.order(2)
-def test_get_strategies_by_user_equals_200():
+def test_get_strategies_of_user():
     response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies")
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
@@ -28,7 +26,43 @@ def test_get_strategies_by_user_equals_200():
     resp_body = response.json()
     assert len(resp_body['strategies']) == 1
 
-@pytest.mark.order(3)
+def test_get_strategy_field_by_key():
+    response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+    resp_body = response.json()
+    assert resp_body['name'] == "my_strategy_a"
+
+    response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+    resp_body = response.json()
+    assert resp_body['url'] == "http://192.168.233.136:30000"
+
+    response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/foobar")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 404
+
+    response = requests.get("http://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 404
+
+    response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/url")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 404
+
+    response = requests.get("http://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/name")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+    resp_body = response.json()
+    assert resp_body['name'] == "my_strategy_a"
+
+    response = requests.get("http://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/url")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+    resp_body = response.json()
+    assert resp_body['url'] == "http://192.168.233.136:30002"
+
 def test_create_delete_a_strategy():
     response = requests.post("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
                                 data='{"name": "my_strategy_c"}',
