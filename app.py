@@ -4,6 +4,7 @@ from flask_httpauth import HTTPBasicAuth
 from flask import make_response
 from flask import abort
 from flask import request
+from flask import render_template
 import shortuuid
 import docker, os
 
@@ -17,7 +18,7 @@ service_addr = "192.168.233.136"
 service_port = 30000
 users = [
     {
-        "uid": "admin",
+        "username": "admin",
         "password": "85114481",
         "is_admin": True,
         "strategies": [
@@ -26,7 +27,7 @@ users = [
         ]
     },
     {
-        "uid": "user1",
+        "username": "user1",
         "password": "85114481",
         "is_admin": False,
         "strategies": [
@@ -40,7 +41,6 @@ strategies = [
         "port": service_port,
         "name": "my_strategy_a",
         "url": "http://" + service_addr + ":" + str(service_port),
-        
         "theia": "not running"
     },
     {
@@ -69,8 +69,8 @@ for container in client.containers.list(all=True, filters={'ancestor': service_i
     except docker.errors.APIError:
         app.logger.error("error when remove container")
 
-def run_container(uid, sid, strategy_name, port):
-    folderpath = volume_root + '/' + uid + '/' + sid
+def run_container(username, sid, strategy_name, port):
+    folderpath = volume_root + '/' + username + '/' + sid
     if not os.path.isdir(folderpath):
         os.system("mkdir -p " + folderpath)
         if os.path.isdir(template_dir):
@@ -100,8 +100,8 @@ def remove_container(sid):
     except:
         app.logger.error("error when stop container")
 
-def cleanup_volume(uid, sid):
-    folderpath = volume_root + '/' + uid + '/' + sid
+def cleanup_volume(username, sid):
+    folderpath = volume_root + '/' + username + '/' + sid
     remove_container(sid)
     os.system("rm -rf " + folderpath)
 
@@ -111,14 +111,14 @@ auth = HTTPBasicAuth()
 
 @auth.get_password
 def get_password(username):
-    user = list(filter(lambda t: str(t['uid']) == str(username), users))
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
     if len(user) == 0:
         return None
     return user[0]['password']
 
 @auth.get_user_roles
 def get_basic_role(username):
-    user = list(filter(lambda t: str(t['uid']) == str(username), users))
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
     if user[0]['is_admin']:
         return ['Admin']
 
@@ -136,8 +136,13 @@ def not_found(error):
 # curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/users
 @app.route('/api/v1.0/users', methods=['GET'])
 @auth.login_required(role='Admin')
-def get_all_uid():
-    return jsonify({'usernames': users})
+def get_all_users():
+    #return jsonify({'users': users})
+    #return render_template('users.html', users=users)
+
+    username_list = [temp_dict['username'] for temp_dict in users]
+    #return jsonify({'users': username_list})
+    return render_template('users.html', users=username_list)
 
 # curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
 # curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
@@ -152,7 +157,7 @@ def get_all_strategies():
 @auth.login_required()
 def get_strategies():
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['uid']) == str(username), users))
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
     sid_list = user[0]['strategies']
     strategy_list = list(filter(lambda t: str(t['sid']) in sid_list, strategies))
     return jsonify({'strategies': strategy_list})
@@ -166,7 +171,7 @@ def get_strategies():
 def get_strategy(sid):
     username = auth.current_user()
     app.logger.info(username)
-    user = list(filter(lambda t: str(t['uid']) == str(username), users))
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
     sid_list = user[0]['strategies']
     strategy_list = list(filter(lambda t: str(t['sid']) == sid and str(t['sid']) in sid_list, strategies))
     if len(strategy_list) > 0:
@@ -182,7 +187,7 @@ def get_strategy(sid):
 def get_strategy_field(sid, key):
     username = auth.current_user()
     app.logger.info(username)
-    user = list(filter(lambda t: str(t['uid']) == str(username), users))
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
     sid_list = user[0]['strategies']
     strategy_list = list(filter(lambda t: str(t['sid']) == sid and str(t['sid']) in sid_list, strategies))
     if len(strategy_list) > 0 and key in strategy_list[0].keys():
@@ -200,7 +205,7 @@ def create_strategy():
     sid = shortuuid.uuid()
 
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['uid']) == str(username), users))
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
     if len(user[0]['strategies']) >= 3:
         abort(make_response(jsonify(error="the service has reached its maximum number of container instances for username = "+username), 429))
 
@@ -226,8 +231,8 @@ def create_strategy():
 @app.route('/api/v1.0/strategies/<sid>', methods=['PUT'])
 @auth.login_required()
 def update_strategy(sid):
-    uid = auth.current_user() 
-    user = list(filter(lambda t: str(t['uid']) == str(uid), users))
+    username = auth.current_user() 
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
     if (not sid in user[0]['strategies']) and (user[0]['is_admin'] != True):
         abort(404)
 
@@ -244,7 +249,7 @@ def update_strategy(sid):
 
     real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
     if request.json['action'] == "start":
-        run_container(real_user[0]['uid'], strategy[0]['sid'], strategy[0]['name'], strategy[0]['port'])
+        run_container(real_user[0]['username'], strategy[0]['sid'], strategy[0]['name'], strategy[0]['port'])
         strategy[0]['theia'] = "running"
     elif request.json['action'] == "stop":
         remove_container(strategy[0]['sid'])
@@ -258,11 +263,11 @@ def update_strategy(sid):
 @app.route('/api/v1.0/strategies/<sid>', methods=['DELETE'])
 @auth.login_required()
 def delete_strategy(sid):
-    uid = auth.current_user() 
-    user = list(filter(lambda t: str(t['uid']) == str(uid), users))
+    username = auth.current_user() 
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
     if not sid in user[0]['strategies']:
         abort(404)
-    cleanup_volume(uid, sid)  
+    cleanup_volume(username, sid)  
     strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
     if len(strategy) == 0:
         abort(404) 
