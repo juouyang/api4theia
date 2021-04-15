@@ -137,12 +137,12 @@ def not_found(error):
 @app.route('/api/v1.0/users', methods=['GET'])
 @auth.login_required(role='Admin')
 def get_all_users():
-    #return jsonify({'users': users})
-    #return render_template('users.html', users=users)
+    return jsonify({'users': users})
+    return render_template('users.html', users=users)
 
-    username_list = [temp_dict['username'] for temp_dict in users]
+    #username_list = [temp_dict['username'] for temp_dict in users]
     #return jsonify({'users': username_list})
-    return render_template('users.html', users=username_list)
+    #return render_template('users.html', users=username_list)
 
 # curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
 # curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all

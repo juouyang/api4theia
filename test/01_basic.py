@@ -105,3 +105,14 @@ def test_create_delete_a_strategy():
     response = requests.delete("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies/" + str(created_sid))
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
+
+def test_get_all_users():
+    response = requests.get("http://admin:85114481@127.0.0.1:5000/api/v1.0/users")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+    resp_body = response.json()
+    assert len(resp_body['users']) == 2
+
+    response = requests.get("http://user1:85114481@127.0.0.1:5000/api/v1.0/users")
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 401
