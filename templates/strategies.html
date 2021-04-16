@@ -6,9 +6,14 @@
     <title></title>
     <script src=https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js></script>
     <script>
-        var strategies = JSON.parse('{{ strategies | tojson | safe }}');
+        const endpoint = "{{ url_for(request.endpoint) }}"
+        const url = new URL("{{ request.url }}");
+
+        const strategies = JSON.parse('{{ strategies | tojson | safe }}');
+        const username = "{{ g.user['username'] }}"
+        const password = "{{ g.user['password'] }}"
         let start_action = { "action": "start" };
-        let stop_action = { "action": "start" };
+        let stop_action = { "action": "stop" };
     </script>
     <style>
         body {
@@ -17,7 +22,7 @@
         }
 
         textarea {
-            width: 30%;
+            width: 100%;
             min-height: 30rem;
             font-family: "Lucida Console", Monaco, monospace;
             font-size: 0.8rem;
@@ -91,40 +96,57 @@
 
 <body>
     <textarea name="" id="myTextarea"></textarea>
+
     {% for strategy in strategies %}
     <div>
-        <h1>{{ strategy['name'] }}</h1>
-        {% if strategy['theia'] == "not running" %}
-            <label class="switch">
-                <input type="checkbox">
-                <span class="slider round"></span>
-            </label>
-        {% else %}
-            <label class="switch">
-                <input type="checkbox" checked>
-                <span class="slider round"></span>
-            </label>
-        {% endif %}
+        <label class="switch">
+            {% if strategy['theia'] == "not running" %}
+            <input id="{{ strategy['sid'] }}" type="checkbox">
+            {% else %}
+            <input id="{{ strategy['sid'] }}" type="checkbox" checked>
+            {% endif %}
+            <span class="slider round"></span>
+            <script>
+                $("#{{ strategy['sid'] }}").change(function (e) {
+                    $.ajax({
+                        type: 'PUT',
+                        url: "http://" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies/" + event.target.id,
+                        contentType: 'application/json',
+                        data: (this.checked) ? JSON.stringify(start_action) : JSON.stringify(stop_action)
+                    }).done(function () {
+                        console.log('SUCCESS');
+                    }).fail(function (msg) {
+                        console.log(msg);
+                    }).always(function (msg) {
+                        console.log(msg);
+                    });
+                });
+
+                var sid = "{{ strategy['sid'] }}"
+                var desiredLink = "{{ strategy['url'] }}"
+                // var desiredLink = "http://" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid;
+                var desiredText = sid
+                $('body').append($('<a href="' + desiredLink + '">' + desiredText + '</a><br>'));
+            </script>
+        </label>
+        {{ strategy['name'] }}
         <br>
     </div>
     {% endfor %}
+
+    <br>
+
+    <iframe id="borderlessFrame" src="" width="100%" height="900" frameBorder="0"></iframe>
 </body>
 <script>
-    var textedJson = JSON.stringify(strategies, undefined, 4).replace(/\\"/g, '"');
-    $('#myTextarea').text(textedJson);
+    $(document).ready(function () {
+        var textedJson = JSON.stringify(strategies, undefined, 4).replace(/\\"/g, '"');
+        $('#myTextarea').text(textedJson);
 
-    // $.ajax({
-    //     type: 'PUT',
-    //     url: "http://{{ g.user['username'] }}:{{ g.user['password'] }}@127.0.0.1:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV",
-    //     contentType: 'application/json',
-    //     data: JSON.stringify(start_action), // access in body
-    // }).done(function () {
-    //     console.log('SUCCESS');
-    // }).fail(function (msg) {
-    //     console.log(msg);
-    // }).always(function (msg) {
-    //     console.log(msg);
-    // });
+        // var bigFrame = $('#borderlessFrame');
+        // var source = 'http://192.168.233.136:30000';
+        // bigFrame.attr('src', source);
+    });
 </script>
 
 </html>
