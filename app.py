@@ -134,21 +134,6 @@ def get_all_users():
     # return jsonify({'users': username_list})
 
 
-@app.route('/api/v1.0/strategies/all', methods=['GET'])
-@auto.doc()
-@auth.login_required(role='Admin')
-def get_all_strategies():
-    """Get all strategies of all users by admin
-
-    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategies/all 2>/dev/null | head -n 1 | cut -d$' ' -f2
-    200
-    $ curl -u user1:85114481 -I http://127.0.0.1:5000/api/v1.0/strategies/all 2>/dev/null | head -n 1 | cut -d$' ' -f2
-    401
-
-    """
-    return jsonify({'strategies': strategies})
-
-
 @app.route('/api/v1.0/strategies', methods=['GET'])
 @auto.doc()
 @auth.login_required()
