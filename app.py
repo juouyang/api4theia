@@ -207,8 +207,7 @@ def get_strategy_field(sid, key):
 def create_strategy():
     """Create a new strategy
 
-    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/strategies)
-    $ echo $NEW_SID
+    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/strategies | jq -r '.strategy.sid')
 
     """
     if not request.json or not 'name' in request.json:
@@ -237,7 +236,7 @@ def create_strategy():
     strategies.append(strategy)
     with open('strategies.json', 'w') as f:
         json.dump(strategies, f)
-    return sid, 201
+    return jsonify({'strategy': strategy}), 201
 
 
 @app.route('/api/v1.0/strategies/<sid>', methods=['DELETE'])
@@ -246,7 +245,7 @@ def create_strategy():
 def delete_strategy(sid):
     """Delete one strategy, return 200 or 404
 
-    $ curl -sq -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/<sid>
+    $ curl -sq -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/${NEW_SID}
 
     """
     username = auth.current_user()

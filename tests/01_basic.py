@@ -90,8 +90,10 @@ def test_create_delete_a_strategy():
     response = requests.post("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
                              data='{"name": "my_strategy_c"}',
                              headers={'Content-Type': 'application/json'})
+    assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 201
-    created_sid = response.text
+    resp_body = response.json()
+    created_sid = resp_body['strategy']['sid']
 
     response = requests.post("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
                              data='{"name": "my_strategy_c"}',
@@ -114,8 +116,10 @@ def test_create_delete_a_strategy():
     response = requests.post("http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
                              data='{"name": "my_strategy_c"}',
                              headers={'Content-Type': 'application/json'})
+    assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 201
-    created_sid = response.text
+    resp_body = response.json()
+    created_sid = resp_body['strategy']['sid']
 
     response = requests.delete(
         "http://admin:85114481@127.0.0.1:5000/api/v1.0/strategies/" + str(created_sid))
