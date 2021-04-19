@@ -6,15 +6,18 @@ from flask import abort
 from flask import request
 from flask import render_template
 from flask import g
+from flask_selfdoc import Autodoc
 import json
 import shortuuid
-import docker, os
+import docker
+import os
 import logging
 
 log = logging.getLogger('werkzeug')
 #log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
+auto = Autodoc(app)
 
 client = docker.from_env()
 volume_root = "/media/nfs/theia"
@@ -41,13 +44,15 @@ for container in client.containers.list(all=True, filters={'ancestor': service_i
     except docker.errors.APIError:
         app.logger.error("error when remove container")
 
+
 def run_container(username, sid, strategy_name, port):
     folderpath = volume_root + '/' + username + '/' + sid
     if not os.path.isdir(folderpath):
         os.system("mkdir -p " + folderpath)
         if os.path.isdir(template_dir):
             os.system("cp -rf " + template_dir + "/* " + folderpath)
-            os.system("mv -f " + folderpath + '/Your_Strategy.py ' + folderpath + '/' + strategy_name + '.py')
+            os.system("mv -f " + folderpath + '/Your_Strategy.py ' +
+                      folderpath + '/' + strategy_name + '.py')
     else:
         os.system("cp -rf " + template_dir + "/reference/ " + folderpath)
         os.system("cp -rf " + template_dir + "/__main__.py " + folderpath)
@@ -62,6 +67,7 @@ def run_container(username, sid, strategy_name, port):
             volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
         )
 
+
 def remove_container(sid):
     try:
         if len(client.containers.list(all=True, filters={'name': sid})) != 0:
@@ -72,6 +78,7 @@ def remove_container(sid):
     except:
         app.logger.error("error when stop container")
 
+
 def cleanup_volume(username, sid):
     folderpath = volume_root + '/' + username + '/' + sid
     remove_container(sid)
@@ -79,7 +86,9 @@ def cleanup_volume(username, sid):
 
 #
 
+
 auth = HTTPBasicAuth()
+
 
 @auth.get_password
 def get_password(username):
@@ -88,107 +97,138 @@ def get_password(username):
         return None
     return user[0]['password']
 
+
 @auth.get_user_roles
 def get_basic_role(username):
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     if user[0]['is_admin']:
         return ['Admin']
 
+
 @auth.error_handler
 def unauthorized():
     return make_response(jsonify({'error': 'Unauthorized access'}), 401)
+
 
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
-#
+# backend
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/users/html
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/users/html
-@app.route('/api/v1.0/users/html', methods=['GET'])
-@auth.login_required(role='Admin')
-def get_all_users_html():
-    return render_template('users.html', users=users)
-    #username_list = [temp_dict['username'] for temp_dict in users]
-    #return render_template('users.html', users=username_list)
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/users
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/users
 @app.route('/api/v1.0/users', methods=['GET'])
+@auto.doc()
 @auth.login_required(role='Admin')
 def get_all_users():
+    """Get all users by admin
+
+    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/users 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    200
+    $ curl -u user1:85114481 -I http://127.0.0.1:5000/api/v1.0/users 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    401
+
+    """
     return jsonify({'users': users})
-    #username_list = [temp_dict['username'] for temp_dict in users]
-    #return jsonify({'users': username_list})
+    # username_list = [temp_dict['username'] for temp_dict in users]
+    # return jsonify({'users': username_list})
 
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/all
 @app.route('/api/v1.0/strategies/all', methods=['GET'])
+@auto.doc()
 @auth.login_required(role='Admin')
 def get_all_strategies():
+    """Get all strategies of all users by admin
+
+    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategies/all 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    200
+    $ curl -u user1:85114481 -I http://127.0.0.1:5000/api/v1.0/strategies/all 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    401
+
+    """
     return jsonify({'strategies': strategies})
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/html
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies/html
-@app.route('/api/v1.0/strategies/html', methods=['GET'])
-@auth.login_required()
-def get_strategies_html():
-    username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
-    sid_list = user[0]['strategies']
-    strategy_list = list(filter(lambda t: str(t['sid']) in sid_list, strategies))
-    g.user = user[0]
-    return render_template('strategies.html', strategies=strategy_list)
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategies
 @app.route('/api/v1.0/strategies', methods=['GET'])
+@auto.doc()
 @auth.login_required()
 def get_strategies():
+    """Get all strategies of one user
+
+    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    200
+    $ curl -u user1:85114481 -I http://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    200
+    $ curl -I http://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    401
+
+    """
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
-    sid_list = user[0]['strategies']
-    strategy_list = list(filter(lambda t: str(t['sid']) in sid_list, strategies))
+    user_list = list(filter(lambda t: str(
+        t['username']) == str(username), users))
+    sid_list = user_list[0]['strategies']
+    strategy_list = list(
+        filter(lambda t: str(t['sid']) in sid_list, strategies))
     return jsonify({'strategies': strategy_list})
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV
+
 @app.route('/api/v1.0/strategy/<sid>', methods=['GET'])
+@auto.doc()
 @auth.login_required()
 def get_strategy(sid):
+    """Get one strategy
+
+    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    200
+    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    404
+
+    """
     username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     sid_list = user[0]['strategies']
-    strategy_list = list(filter(lambda t: str(t['sid']) == sid and str(t['sid']) in sid_list, strategies))
+    strategy_list = list(filter(lambda t: str(
+        t['sid']) == sid and str(t['sid']) in sid_list, strategies))
     if len(strategy_list) > 0:
         return jsonify({"strategy": strategy_list[0]})
     abort(404)
 
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url
-# curl -u admin:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/url
-# curl -u user1:85114481 -i http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/name
+
 @app.route('/api/v1.0/strategy/<sid>/<key>', methods=['GET'])
+@auto.doc()
 @auth.login_required()
 def get_strategy_field(sid, key):
+    """Get one field of one strategy
+
+    $ curl -sq -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url | head -n 1 | cut -d$' ' -f2
+    200
+    $ curl -sq -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name | head -n 1 | cut -d$' ' -f2
+    200
+
+    """
     username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     sid_list = user[0]['strategies']
-    strategy_list = list(filter(lambda t: str(t['sid']) == sid and str(t['sid']) in sid_list, strategies))
+    strategy_list = list(filter(lambda t: str(
+        t['sid']) == sid and str(t['sid']) in sid_list, strategies))
     if len(strategy_list) > 0 and key in strategy_list[0].keys():
         return jsonify({key: strategy_list[0][key]})
     abort(404)
 
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/strategies
+
 @app.route('/api/v1.0/strategies', methods=['POST'])
+@auto.doc()
 @auth.login_required()
 def create_strategy():
+    """Create a new strategy
+
+    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/strategies)
+    $ echo $NEW_SID
+
+    """
     if not request.json or not 'name' in request.json:
-        abort(make_response(jsonify(error="the request should contain strategy name"), 400))
+        abort(make_response(
+            jsonify(error="the request should contain strategy name"), 400))
 
     port = strategies[-1]['port'] + 1 if len(strategies) > 0 else service_port
     sid = shortuuid.uuid()
@@ -196,7 +236,8 @@ def create_strategy():
     username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     if len(user[0]['strategies']) >= 3:
-        abort(make_response(jsonify(error="the service has reached its maximum number of container instances for username = "+username), 429))
+        abort(make_response(jsonify(
+            error="the service has reached its maximum number of container instances for username = "+username), 429))
 
     user[0]['strategies'].append(sid)
     with open('users.json', 'w') as f:
@@ -211,20 +252,46 @@ def create_strategy():
     strategies.append(strategy)
     with open('strategies.json', 'w') as f:
         json.dump(strategies, f)
-    return jsonify({'strategy': strategy}), 201
+    return sid, 201
 
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
-# curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
-# curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
-# curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"start"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
-# curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"action":"stop"}' http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
-@app.route('/api/v1.0/strategies/<sid>', methods=['PUT'])
+
+@app.route('/api/v1.0/strategies/<sid>', methods=['DELETE'])
+@auto.doc()
+@auth.login_required()
+def delete_strategy(sid):
+    """Delete one strategy, return 200 or 404
+
+    $ curl -sq -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/<sid>
+
+    """
+    username = auth.current_user()
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    if not sid in user[0]['strategies']:
+        abort(404)
+    cleanup_volume(username, sid)
+    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
+    if len(strategy) == 0:
+        abort(404)
+    strategies.remove(strategy[0])
+    with open('strategies.json', 'w') as f:
+        json.dump(strategies, f)
+    user[0]['strategies'].remove(sid)
+    with open('users.json', 'w') as f:
+        json.dump(users, f)
+    return jsonify({'result': True})
+
+
+@app.route('/api/v1.0/strategy/<sid>', methods=['PUT'])
+@auto.doc()
 @auth.login_required()
 def update_strategy(sid):
-    username = auth.current_user() 
+    """Change fields of one strategy
+
+    $ curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
+    200
+    """
+    username = auth.current_user()
+    app.logger.info(username)
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     if (not sid in user[0]['strategies']) and (user[0]['is_admin'] != True):
         abort(404)
@@ -236,43 +303,102 @@ def update_strategy(sid):
         abort(400)
     if 'name' in request.json and type(request.json['name']) != str:
         abort(400)
-    if 'action' in request.json and type(request.json['action']) != str:
-        abort(400)
     strategy[0]['name'] = request.json.get('name', strategy[0]['name'])
-
-    real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
-    if request.json['action'] == "start":
-        run_container(real_user[0]['username'], strategy[0]['sid'], strategy[0]['name'], strategy[0]['port'])
-        strategy[0]['theia'] = "running"
-    elif request.json['action'] == "stop":
-        remove_container(strategy[0]['sid'])
-        strategy[0]['theia'] = "not running"
+    with open('strategies.json', 'w') as f:
+        json.dump(strategies, f)
     return jsonify({'strategy': strategy[0]})
 
-# curl -u user1:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/YJMDUH9zuwXf8c6KT2CDEV
-# curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
-# curl -u user1:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/9JYN5ycAEfoVNTkFxFQQxW
-@app.route('/api/v1.0/strategies/<sid>', methods=['DELETE'])
+
+@app.route('/api/v1.0/strategy/<sid>/start', methods=['PUT'])
+@auto.doc()
 @auth.login_required()
-def delete_strategy(sid):
-    username = auth.current_user() 
+def start_ide(sid):
+    """Change fields of one strategy
+
+    $ curl -u admin:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
+    200
+    $ curl -u user1:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
+    404
+    $ curl -u user1:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/start
+    200
+    $ curl -u admin:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/start
+    404
+
+    """
+    username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     if not sid in user[0]['strategies']:
         abort(404)
-    cleanup_volume(username, sid)  
+
     strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
     if len(strategy) == 0:
-        abort(404) 
-    strategies.remove(strategy[0])
-    with open('strategies.json', 'w') as f:
-        json.dump(strategies, f)
-    user[0]['strategies'].remove(sid);
-    with open('users.json', 'w') as f:
-        json.dump(users, f)
-    return jsonify({'result': True})
+        abort(404)
 
-#
+    real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
+    run_container(real_user[0]['username'], strategy[0]
+                  ['sid'], strategy[0]['name'], strategy[0]['port'])
+    strategy[0]['theia'] = "running"
+    return jsonify({'strategy': strategy[0]})
+
+
+@app.route('/api/v1.0/strategy/<sid>/stop', methods=['PUT'])
+@auto.doc()
+@auth.login_required()
+def stop_ide(sid):
+    """Change fields of one strategy
+
+    $ curl -u admin:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
+    200
+    $ curl -u user1:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
+    404
+    $ curl -u user1:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/stop
+    200
+    $ curl -u admin:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/stop
+    404
+
+    """
+    username = auth.current_user()
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    if not sid in user[0]['strategies']:
+        abort(404)
+
+    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
+    if len(strategy) == 0:
+        abort(404)
+
+    real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
+    remove_container(strategy[0]['sid'])
+    strategy[0]['theia'] = "not running"
+    return jsonify({'strategy': strategy[0]})
+
+
+# frontend
+
+
+@app.route('/api/v1.0/users/html', methods=['GET'])
+@auth.login_required(role='Admin')
+def get_all_users_html():
+    return render_template('users.html', users=users)
+    # username_list = [temp_dict['username'] for temp_dict in users]
+    # return render_template('users.html', users=username_list)
+
+
+@app.route('/api/v1.0/strategies/html', methods=['GET'])
+@auth.login_required()
+def get_strategies_html():
+    username = auth.current_user()
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    sid_list = user[0]['strategies']
+    strategy_list = list(
+        filter(lambda t: str(t['sid']) in sid_list, strategies))
+    g.user = user[0]
+    return render_template('strategies.html', strategies=strategy_list)
+
+
+@app.route('/doc')
+def documentation():
+    return auto.html()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port='5000', debug=True)
