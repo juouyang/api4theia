@@ -14,7 +14,7 @@ import os
 import logging
 
 log = logging.getLogger('werkzeug')
-#log.setLevel(logging.ERROR)
+log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 auto = Autodoc(app)
@@ -123,9 +123,9 @@ def not_found(error):
 def get_all_users():
     """Get all users by admin
 
-    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/users 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/users 2>/dev/null | head -n 1 | cut -d$' ' -f2
     200
-    $ curl -u user1:85114481 -I http://127.0.0.1:5000/api/v1.0/users 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u user1:85114481 -I -k https://127.0.0.1:5000/api/v1.0/users 2>/dev/null | head -n 1 | cut -d$' ' -f2
     401
 
     """
@@ -140,11 +140,11 @@ def get_all_users():
 def get_strategies():
     """Get all strategies of one user
 
-    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
     200
-    $ curl -u user1:85114481 -I http://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u user1:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
     200
-    $ curl -I http://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -I -k https://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
     401
 
     """
@@ -163,9 +163,9 @@ def get_strategies():
 def get_strategy(sid):
     """Get one strategy
 
-    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV 2>/dev/null | head -n 1 | cut -d$' ' -f2
     200
-    $ curl -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW 2>/dev/null | head -n 1 | cut -d$' ' -f2
     404
 
     """
@@ -185,9 +185,9 @@ def get_strategy(sid):
 def get_strategy_field(sid, key):
     """Get one field of one strategy
 
-    $ curl -sq -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url | head -n 1 | cut -d$' ' -f2
+    $ curl -sq -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url | head -n 1 | cut -d$' ' -f2
     200
-    $ curl -sq -u admin:85114481 -I http://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name | head -n 1 | cut -d$' ' -f2
+    $ curl -sq -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name | head -n 1 | cut -d$' ' -f2
     200
 
     """
@@ -207,7 +207,7 @@ def get_strategy_field(sid, key):
 def create_strategy():
     """Create a new strategy
 
-    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' http://localhost:5000/api/v1.0/strategies | jq -r '.strategy.sid')
+    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' -k https://localhost:5000/api/v1.0/strategies | jq -r '.strategy.sid')
 
     """
     if not request.json or not 'name' in request.json:
@@ -245,7 +245,7 @@ def create_strategy():
 def delete_strategy(sid):
     """Delete one strategy, return 200 or 404
 
-    $ curl -sq -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE http://localhost:5000/api/v1.0/strategies/${NEW_SID}
+    $ curl -sq -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k https://localhost:5000/api/v1.0/strategies/${NEW_SID}
 
     """
     username = auth.current_user()
@@ -271,7 +271,7 @@ def delete_strategy(sid):
 def update_strategy(sid):
     """Change fields of one strategy
 
-    $ curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
+    $ curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
     200
     """
     username = auth.current_user()
@@ -299,13 +299,13 @@ def update_strategy(sid):
 def start_ide(sid):
     """Change fields of one strategy
 
-    $ curl -u admin:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
+    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
     200
-    $ curl -u user1:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
+    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
     404
-    $ curl -u user1:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/start
+    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/start
     200
-    $ curl -u admin:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/start
+    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/start
     404
 
     """
@@ -331,13 +331,13 @@ def start_ide(sid):
 def stop_ide(sid):
     """Change fields of one strategy
 
-    $ curl -u admin:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
+    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
     200
-    $ curl -u user1:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
+    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
     404
-    $ curl -u user1:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/stop
+    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/stop
     200
-    $ curl -u admin:85114481 -i -X PUT http://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/stop
+    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/stop
     404
 
     """
@@ -385,4 +385,4 @@ def documentation():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port='5000', debug=True)
+    app.run(host='0.0.0.0', port='5000', debug=True, ssl_context='adhoc')

@@ -33,7 +33,7 @@
     <script>
       var username = "{{ user['username'] }}"
       var password = "{{ user['password'] }}"
-      var desiredLink = "http://" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies/html";
+      var desiredLink = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies/html";
       var desiredText = username
       $('body').append($('<h1><a href="'+desiredLink+'">'+desiredText+'</a></h1>'));
     </script>

@@ -106,7 +106,7 @@
             <span class="slider round"></span>
             <script>
                 $("#{{ strategy['sid'] }}").change(function (e) {
-                    var action_api = "http://" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + event.target.id + "/" + ((this.checked) ? "start" : "stop");
+                    var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + event.target.id + "/" + ((this.checked) ? "start" : "stop");
                     $.ajax({
                         type: 'PUT',
                         url: action_api,
@@ -121,7 +121,7 @@
 
                 var sid = "{{ strategy['sid'] }}"
                 var desiredLink = "{{ strategy['url'] }}"
-                // var desiredLink = "http://" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid;
+                // var desiredLink = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid;
                 var desiredText = sid
                 $('body').append($('<a href="' + desiredLink + '">' + desiredText + '</a><br>'));
             </script>
@@ -139,10 +139,6 @@
     $(document).ready(function () {
         var textedJson = JSON.stringify(strategies, undefined, 4).replace(/\\"/g, '"');
         $('#myTextarea').text(textedJson);
-
-        // var bigFrame = $('#borderlessFrame');
-        // var source = 'http://192.168.233.136:30000';
-        // bigFrame.attr('src', source);
     });
 </script>
 
