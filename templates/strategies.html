@@ -12,8 +12,6 @@
         const strategies = JSON.parse('{{ strategies | tojson | safe }}');
         const username = "{{ g.user['username'] }}"
         const password = "{{ g.user['password'] }}"
-        let start_action = { "action": "start" };
-        let stop_action = { "action": "stop" };
     </script>
     <style>
         body {
@@ -108,11 +106,10 @@
             <span class="slider round"></span>
             <script>
                 $("#{{ strategy['sid'] }}").change(function (e) {
+                    var action_api = "http://" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + event.target.id + "/" + ((this.checked) ? "start" : "stop");
                     $.ajax({
                         type: 'PUT',
-                        url: "http://" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies/" + event.target.id,
-                        contentType: 'application/json',
-                        data: (this.checked) ? JSON.stringify(start_action) : JSON.stringify(stop_action)
+                        url: action_api,
                     }).done(function () {
                         console.log('SUCCESS');
                     }).fail(function (msg) {
