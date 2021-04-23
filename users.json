@@ -1,1 +1,1 @@
-[{"username": "admin", "password": "85114481", "is_admin": true, "strategies": ["YJMDUH9zuwXf8c6KT2CDEV", "oMTmLAhDhNAArmp8Go64Hu"]}, {"username": "user1", "password": "85114481", "is_admin": false, "strategies": ["9JYN5ycAEfoVNTkFxFQQxW"]}]
+[{"uid": "a001", "username": "admin", "password": "85114481", "is_admin": true, "strategies": ["YJMDUH9zuwXf8c6KT2CDEV", "oMTmLAhDhNAArmp8Go64Hu"]}, {"uid": "u001", "username": "user1", "password": "85114481", "is_admin": false, "strategies": ["9JYN5ycAEfoVNTkFxFQQxW"]}]

@@ -34,17 +34,6 @@ f = open('strategies.json')
 strategies = json.load(f)
 f.close()
 
-# docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
-for container in client.containers.list(all=True, filters={'ancestor': service_image}):
-    try:
-        cid = container.attrs.get(id)
-        container.stop()
-        if len(client.containers.list(all=True, filters={'id': cid})) != 0:
-            container.remove()
-    except docker.errors.APIError:
-        app.logger.error("error when remove container")
-
-
 def run_container(username, sid, strategy_name, port):
     folderpath = volume_root + '/' + username + '/' + sid
     if not os.path.isdir(folderpath):
@@ -113,6 +102,7 @@ def unauthorized():
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
+
 
 # backend
 
@@ -359,7 +349,7 @@ def stop_ide(sid):
 # frontend
 
 
-@app.route('/api/v1.0/users/html', methods=['GET'])
+@app.route('/users', methods=['GET'])
 @auth.login_required(role='Admin')
 def get_all_users_html():
     return render_template('users.html', users=users)
@@ -367,7 +357,7 @@ def get_all_users_html():
     # return render_template('users.html', users=username_list)
 
 
-@app.route('/api/v1.0/strategies/html', methods=['GET'])
+@app.route('/strategies', methods=['GET'])
 @auth.login_required()
 def get_strategies_html():
     username = auth.current_user()
@@ -385,4 +375,13 @@ def documentation():
 
 
 if __name__ == '__main__':
+    # docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
+    for container in client.containers.list(all=True, filters={'ancestor': service_image}):
+        try:
+            cid = container.attrs.get(id)
+            container.stop()
+            if len(client.containers.list(all=True, filters={'id': cid})) != 0:
+                container.remove()
+        except docker.errors.APIError:
+            app.logger.error("error when remove container")
     app.run(host='0.0.0.0', port='5000', debug=True, ssl_context='adhoc')
