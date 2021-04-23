@@ -21,7 +21,7 @@ auto = Autodoc(app)
 
 client = docker.from_env()
 volume_root = "/media/nfs/theia"
-template_dir = "/root/builds/1_aicots/template/0.1/Strategy"
+template_dir = "/root/builds/1_aicots/Doquant/Strategy"
 service_image = "theia-python:aicots"
 service_addr = "192.168.233.136"
 service_port = 30000
@@ -344,6 +344,36 @@ def stop_ide(sid):
     remove_container(strategy[0]['sid'])
     strategy[0]['theia'] = "not running"
     return jsonify({'strategy': strategy[0]})
+
+
+@app.route('/api/v1.0/strategy/<sid>/build', methods=['PUT'])
+@auto.doc()
+@auth.login_required()
+def build_docker(sid):
+    """Build docker image of strategy
+
+    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/build
+    200
+    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/build
+    404
+    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/build
+    200
+    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/build
+    404
+
+    """
+    username = auth.current_user()
+    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    if not sid in user[0]['strategies']:
+        abort(404)
+
+    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
+    if len(strategy) == 0:
+        abort(404)
+
+    real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
+    # build_docker_image(username, strategy[0]['sid'])
+    return jsonify({'log': [ 'a', 'b', 'c' ]})
 
 
 # frontend
