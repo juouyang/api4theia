@@ -15,34 +15,26 @@
         const password = "{{ g.user['password'] }}"
 
         function check_build_status(status_endpoint) {
-            var action_api = "http:" + "//" + url.hostname + ":5001" + "/" + status_endpoint;
-            $.ajax({
-                type: 'GET',
-                crossDomain: true,
-                url: action_api,
-            }).done(function (data, status, xhr) {
-                http_code = xhr.status;
-                status_endpoint = data;
-                console.log(http_code);
-                console.log(status_endpoint);
-                return http_code;
-            }).fail(function (msg) {
-            }).always(function (msg) {
-            });
-        }
-
-        function check_build_status(status_endpoint) {
-            var action_api = "http:" + "//" + url.hostname + ":5001" + "/" + status_endpoint;
             var ret_code = "0";
-
+            var action_api = "http:" + "//" + url.hostname + ":5001" + "/" + status_endpoint;
             $.ajax({
                 type: 'GET',
                 crossDomain: true,
                 url: action_api,
-                async: false,
                 success: function (data, status, xhr) {
                     ret_code = xhr.status;
+                    console.log("ret_code=" + ret_code)
+                    if (ret_code == "202") {
+                        setTimeout(function () {
+                            check_build_status(status_endpoint)
+                        }, 1000);
+                    } else {
+                        console.log(data);
+                    }
                 }
+            }).done(function (data, status, xhr) {
+            }).fail(function (msg) {
+            }).always(function (msg) {
             });
 
             return ret_code;
@@ -162,23 +154,8 @@
 
                 var sid = "{{ strategy['sid'] }}"
                 var desiredLink = "{{ strategy['url'] }}"
-                // var desiredLink = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid;
-                var desiredText = sid
+                var desiredText = "Open IDE"
                 $('body').append($('<a href="' + desiredLink + '" target="_blank">' + desiredText + '</a><br>'));
-
-                /// ----------- API not in this project
-                // var sid = "{{ strategy['sid'] }}"
-                // var desiredLink = "{{ strategy['url'] }}"
-                // var desiredLink = "http:" + "//" + "127.0.0.1:5001" + "/" + username + "/" + sid;
-                // var desiredText = "build docker"
-                // $('body').append($('<a href="' + desiredLink + '" target="_blank">' + desiredText + '</a><br>'));
-                /// ----------- API not in this project
-
-                // var sid = "{{ strategy['sid'] }}"
-                // var desiredLink = "{{ strategy['url'] }}"
-                // var desiredLink = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid + "/build"
-                // var desiredText = "build docker"
-                // $('body').append($('<a href="' + desiredLink + '" target="_blank">' + desiredText + '</a><br>'));
             </script>
         </label>
         {{ strategy['name'] }}
@@ -198,15 +175,11 @@
                         crossDomain: true,
                         url: action_api,
                     }).done(function (data, status, xhr) {
-                        http_code = xhr.status;
+                        console.log("xhr.status=" + xhr.status);
                         status_endpoint = data;
-                        console.log(http_code);
                         console.log(status_endpoint);
-
-                        while (http_code == "202") {
-                            http_code = check_build_status(status_endpoint);
-                            console.log("http_code=" + http_code);
-                        }
+                        http_code = check_build_status(status_endpoint);
+                        console.log("check_build_status=" + http_code);
                     }).fail(function (msg) {
                     }).always(function (msg) {
                     });

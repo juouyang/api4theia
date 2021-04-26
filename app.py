@@ -43,8 +43,9 @@ def run_container(username, sid, strategy_name, port):
             os.system("mv -f " + folderpath + '/Your_Strategy.py ' +
                       folderpath + '/' + strategy_name + '.py')
     else:
-        os.system("cp -rf " + template_dir + "/reference/ " + folderpath)
-        os.system("cp -rf " + template_dir + "/__main__.py " + folderpath)
+        if os.path.isdir(template_dir):
+            os.system("cp -rf " + template_dir + "/reference/ " + folderpath)
+            os.system("cp -rf " + template_dir + "/__main__.py " + folderpath)
 
     if len(client.containers.list(all=True, filters={'name': sid})) == 0:
         client.containers.run(
