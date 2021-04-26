@@ -163,7 +163,8 @@
                     $btn.button('loading');
 
                     var sid = "{{ strategy['sid'] }}";
-                    var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + username + "/" + sid;
+                    //var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + username + "/" + sid;
+                    var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid + "/build"
 
                     $.ajax({
                         type: 'GET',

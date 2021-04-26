@@ -412,7 +412,8 @@ def async_api(wrapped_function):
                     # close the database session (if any)
 
         # Assign an id to the asynchronous task
-        task_id = shortuuid.uuid()
+        sid = kwargs['sid']
+        task_id = sid
 
         # Record the task, and then launch it
         tasks[task_id] = {'task_thread': threading.Thread(
@@ -443,15 +444,21 @@ class GetTaskStatus(Resource):
         return task['return_value']
 
 
-class CatchAll(Resource):
+class BuildDocker(Resource):
     @auth.login_required()
     @async_api
-    def get(self, path=''):
+    def get(self, sid=''):
         # perform some intensive processing
-        print("starting processing task, path: '%s'" % path)
+        print("starting processing task, sid: '%s'" % sid)
 
-        child = sp.Popen("cd /media/nfs/theia/" + path +
-                         "; curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash", shell=True, stdout=sp.PIPE)
+        ## user ID
+        username = request.authorization['username']
+        ## strategy ID = sid
+        path = username + "/" + sid
+
+        app.logger.info(path)
+
+        child = sp.Popen("cd /media/nfs/theia/" + path + "; curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash", shell=True, stdout=sp.PIPE)
         #child = sp.Popen("cd /media/nfs/theia/" + path + "; bash build.sh", shell=True, stdout=sp.PIPE)
         #child = sp.Popen("echo foo; echo bar", shell=True, stdout=sp.PIPE)
         console_output = str(child.communicate()[0].decode()).strip()
@@ -467,8 +474,8 @@ class CatchAll(Resource):
         return json, 200 if rc == 0 else rc
 
 
-# https://127.0.0.1:5000/admin/YJMDUH9zuwXf8c6KT2CDEV/
-api.add_resource(CatchAll, '/<path:path>')
+# curl -k https://admin:85114481@127.0.0.1:5000/YJMDUH9zuwXf8c6KT2CDEV/build
+api.add_resource(BuildDocker, '/api/v1.0/strategy/<sid>/build')
 # https://127.0.0.1:5000/status/<task_id>
 api.add_resource(GetTaskStatus, '/status/<task_id>')
 
