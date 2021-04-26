@@ -6,3 +6,5 @@ docker==5.0.0
 pip==21.0.1
 pyopenssl
 Rust
+Flask-RESTful==0.3.8
+Flask-CORS

@@ -14,30 +14,28 @@
         const username = "{{ g.user['username'] }}"
         const password = "{{ g.user['password'] }}"
 
-        function check_build_status(status_endpoint) {
-            var ret_code = "0";
-            var action_api = "http:" + "//" + url.hostname + ":5001" + "/" + status_endpoint;
+        function check_build_status(status_endpoint, sid) {
+            var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + status_endpoint;
             $.ajax({
                 type: 'GET',
                 crossDomain: true,
                 url: action_api,
                 success: function (data, status, xhr) {
                     ret_code = xhr.status;
-                    console.log("ret_code=" + ret_code)
                     if (ret_code == "202") {
                         setTimeout(function () {
-                            check_build_status(status_endpoint)
+                            check_build_status(status_endpoint, sid);
                         }, 1000);
                     } else {
-                        console.log(data);
+                        var $btn = $("#btn_" + sid);
+                        $btn.button('reset');
+                        console.log(data)
                     }
                 }
             }).done(function (data, status, xhr) {
             }).fail(function (msg) {
             }).always(function (msg) {
             });
-
-            return ret_code;
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -146,9 +144,7 @@
                     }).done(function () {
                         console.log('SUCCESS');
                     }).fail(function (msg) {
-                        console.log(msg);
                     }).always(function (msg) {
-                        console.log(msg);
                     });
                 });
 
@@ -167,26 +163,21 @@
                     $btn.button('loading');
 
                     var sid = "{{ strategy['sid'] }}";
-                    console.log(sid);
-                    var action_api = "http:" + "//" + url.hostname + ":5001" + "/" + username + "/" + sid;
+                    var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + username + "/" + sid;
 
                     $.ajax({
                         type: 'GET',
                         crossDomain: true,
                         url: action_api,
                     }).done(function (data, status, xhr) {
-                        console.log("xhr.status=" + xhr.status);
-                        status_endpoint = data;
-                        console.log(status_endpoint);
-                        http_code = check_build_status(status_endpoint);
-                        console.log("check_build_status=" + http_code);
+                        if (xhr.status == "202") {
+                            status_endpoint = data;
+                            check_build_status(status_endpoint, sid);
+                        }
+                    }).done(function (data, status, xhr) {
                     }).fail(function (msg) {
                     }).always(function (msg) {
                     });
-
-                    setTimeout(function () {
-                        $btn.button('reset');
-                    }, 9000);
                 });
             </script>
             Build

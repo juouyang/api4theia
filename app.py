@@ -1,23 +1,37 @@
 #!venv/bin/python
-from flask import Flask, jsonify
-from flask_httpauth import HTTPBasicAuth
+from flask import Flask, g, abort, current_app, request, url_for, jsonify
 from flask import make_response
-from flask import abort
-from flask import request
 from flask import render_template
-from flask import g
+
+from flask_httpauth import HTTPBasicAuth
 from flask_selfdoc import Autodoc
+from flask_restful import Resource, Api
+from flask_cors import CORS
+
+from werkzeug.exceptions import HTTPException, InternalServerError
+
+from datetime import datetime
+from functools import wraps
+
 import json
 import shortuuid
 import docker
 import os
 import logging
+import subprocess as sp
+import threading
+import time
+
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
+CORS(app)
 auto = Autodoc(app)
+api = Api(app)
+
+tasks = {}
 
 client = docker.from_env()
 volume_root = "/media/nfs/theia"
@@ -33,6 +47,7 @@ f.close()
 f = open('strategies.json')
 strategies = json.load(f)
 f.close()
+
 
 def run_container(username, sid, strategy_name, port):
     folderpath = volume_root + '/' + username + '/' + sid
@@ -74,7 +89,8 @@ def cleanup_volume(username, sid):
     remove_container(sid)
     os.system("rm -rf " + folderpath)
 
-#
+
+# authentication
 
 
 auth = HTTPBasicAuth()
@@ -347,34 +363,114 @@ def stop_ide(sid):
     return jsonify({'strategy': strategy[0]})
 
 
-@app.route('/api/v1.0/strategy/<sid>/build', methods=['PUT'])
-@auto.doc()
-@auth.login_required()
-def build_docker(sid):
-    """Build docker image of strategy
+@app.before_first_request
+def before_first_request():
+    """Start a background thread that cleans up old tasks."""
+    def clean_old_tasks():
+        """
+        This function cleans up old tasks from our in-memory data structure.
+        """
+        global tasks
+        while True:
+            # Only keep tasks that are running or that finished less than 5
+            # minutes ago.
+            five_min_ago = datetime.timestamp(datetime.utcnow()) - 5 * 60
+            tasks = {task_id: task for task_id, task in tasks.items()
+                     if 'completion_timestamp' not in task or task['completion_timestamp'] > five_min_ago}
+            time.sleep(60)
 
-    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/build
-    200
-    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/build
-    404
-    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/build
-    200
-    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/build
-    404
+    if not current_app.config['TESTING']:
+        thread = threading.Thread(target=clean_old_tasks)
+        thread.start()
 
-    """
-    username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
-    if not sid in user[0]['strategies']:
-        abort(404)
 
-    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
-    if len(strategy) == 0:
-        abort(404)
+def async_api(wrapped_function):
+    @wraps(wrapped_function)
+    def new_function(*args, **kwargs):
+        def task_call(flask_app, environ):
+            # Create a request context similar to that of the original request
+            # so that the task can have access to flask.g, flask.request, etc.
+            with flask_app.request_context(environ):
+                try:
+                    tasks[task_id]['return_value'] = wrapped_function(
+                        *args, **kwargs)
+                except HTTPException as e:
+                    tasks[task_id]['return_value'] = current_app.handle_http_exception(
+                        e)
+                except Exception as e:
+                    # The function raised an exception, so we set a 500 error
+                    tasks[task_id]['return_value'] = InternalServerError()
+                    if current_app.debug:
+                        # We want to find out if something happened so reraise
+                        raise
+                finally:
+                    # We record the time of the response, to help in garbage
+                    # collecting old tasks
+                    tasks[task_id]['completion_timestamp'] = datetime.timestamp(
+                        datetime.utcnow())
 
-    real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
-    # build_docker_image(username, strategy[0]['sid'])
-    return jsonify({'log': [ 'a', 'b', 'c' ]})
+                    # close the database session (if any)
+
+        # Assign an id to the asynchronous task
+        task_id = shortuuid.uuid()
+
+        # Record the task, and then launch it
+        tasks[task_id] = {'task_thread': threading.Thread(
+            target=task_call, args=(current_app._get_current_object(),
+                                    request.environ))}
+        tasks[task_id]['task_thread'].start()
+
+        # Return a 202 response, with a link that the client can use to
+        # obtain task status
+        print(url_for('gettaskstatus', task_id=task_id))
+        return url_for('gettaskstatus', task_id=task_id), 202, {'Location': url_for('gettaskstatus', task_id=task_id)}
+    return new_function
+
+
+class GetTaskStatus(Resource):
+    @auth.login_required()
+    def get(self, task_id):
+        """
+        Return status about an asynchronous task. If this request returns a 202
+        status code, it means that task hasn't finished yet. Else, the response
+        from the task is returned.
+        """
+        task = tasks.get(task_id)
+        if task is None:
+            abort(404)
+        if 'return_value' not in task:
+            return 'building docker image in the background ...', 202, {'Location': url_for('gettaskstatus', task_id=task_id)}
+        return task['return_value']
+
+
+class CatchAll(Resource):
+    @auth.login_required()
+    @async_api
+    def get(self, path=''):
+        # perform some intensive processing
+        print("starting processing task, path: '%s'" % path)
+
+        child = sp.Popen("cd /media/nfs/theia/" + path +
+                         "; curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash", shell=True, stdout=sp.PIPE)
+        #child = sp.Popen("cd /media/nfs/theia/" + path + "; bash build.sh", shell=True, stdout=sp.PIPE)
+        #child = sp.Popen("echo foo; echo bar", shell=True, stdout=sp.PIPE)
+        console_output = str(child.communicate()[0].decode()).strip()
+        rc = child.returncode
+
+        print("completed processing task with %d" % rc)
+
+        list = console_output.split('\n')
+        json = []
+        for i in range(len(list)):
+            json.append(list[i].replace('\r', ''))
+
+        return json, 200 if rc == 0 else rc
+
+
+# https://127.0.0.1:5000/admin/YJMDUH9zuwXf8c6KT2CDEV/
+api.add_resource(CatchAll, '/<path:path>')
+# https://127.0.0.1:5000/status/<task_id>
+api.add_resource(GetTaskStatus, '/status/<task_id>')
 
 
 # frontend
@@ -415,4 +511,5 @@ if __name__ == '__main__':
                 container.remove()
         except docker.errors.APIError:
             app.logger.error("error when remove container")
+
     app.run(host='0.0.0.0', port='5000', debug=True, ssl_context='adhoc')
