@@ -128,11 +128,11 @@ def not_found(error):
 @auto.doc()
 @auth.login_required(role='Admin')
 def get_all_users():
-    """Get all users by admin
+    """Get all users by admin, return 200 or 401
 
-    $ curl -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/users 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/users
     200
-    $ curl -u user1:85114481 -I -k https://127.0.0.1:5000/api/v1.0/users 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u user1:85114481 -k https://127.0.0.1:5000/api/v1.0/users
     401
 
     """
@@ -145,13 +145,15 @@ def get_all_users():
 @auto.doc()
 @auth.login_required()
 def get_strategies():
-    """Get all strategies of one user
+    """Get all strategies of one user, return 200 or 401
 
-    $ curl -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategies
     200
-    $ curl -u user1:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u user1:85114481 -k https://127.0.0.1:5000/api/v1.0/strategies
     200
-    $ curl -I -k https://127.0.0.1:5000/api/v1.0/strategies 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u foo:bar -k https://127.0.0.1:5000/api/v1.0/strategies
+    401
+    $ curl -k https://127.0.0.1:5000/api/v1.0/strategies
     401
 
     """
@@ -168,11 +170,11 @@ def get_strategies():
 @auto.doc()
 @auth.login_required()
 def get_strategy(sid):
-    """Get one strategy
+    """Get one strategy, return 200, 401 or 404
 
-    $ curl -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV
     200
-    $ curl -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW 2>/dev/null | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
     404
 
     """
@@ -190,12 +192,14 @@ def get_strategy(sid):
 @auto.doc()
 @auth.login_required()
 def get_strategy_field(sid, key):
-    """Get one field of one strategy
+    """Get one field of one strategy, return 200, 401 or 404
 
-    $ curl -sq -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url | head -n 1 | cut -d$' ' -f2
+    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url
     200
-    $ curl -sq -u admin:85114481 -I -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name | head -n 1 | cut -d$' ' -f2
+    $ curl --u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name
     200
+    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/foobar
+    404
 
     """
     username = auth.current_user()
@@ -212,9 +216,16 @@ def get_strategy_field(sid, key):
 @auto.doc()
 @auth.login_required()
 def create_strategy():
-    """Create a new strategy
+    """Create a new strategy, return 201, 400, 401 or 429
 
-    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' -k https://localhost:5000/api/v1.0/strategies | jq -r '.strategy.sid')
+    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' -k https://127.0.0.1:5000/api/v1.0/strategies | jq -r '.strategy.sid')
+    201
+    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_d"}' -k https://127.0.0.1:5000/api/v1.0/strategies
+    429
+    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"foo":"bar"}' -k https://127.0.0.1:5000/api/v1.0/strategies
+    400
+    $ curl -u foo:bar -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' -k https://127.0.0.1:5000/api/v1.0/strategies
+    401
 
     """
     if not request.json or not 'name' in request.json:
@@ -250,9 +261,14 @@ def create_strategy():
 @auto.doc()
 @auth.login_required()
 def delete_strategy(sid):
-    """Delete one strategy, return 200 or 404
+    """Delete one strategy, return 200, 401 or 404
 
-    $ curl -sq -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k https://localhost:5000/api/v1.0/strategies/${NEW_SID}
+    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${NEW_SID}
+    200
+    $ curl -u foo:bar -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${NEW_SID}
+    401
+    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/foobar
+    404
 
     """
     username = auth.current_user()
@@ -276,10 +292,14 @@ def delete_strategy(sid):
 @auto.doc()
 @auth.login_required()
 def update_strategy(sid):
-    """Change fields of one strategy
+    """Change fields of one strategy, return 200, 401 or 404
 
-    $ curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
+    $ curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
     200
+    $ curl -u foo:bar -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
+    401
+    $ curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/foobar
+    404
     """
     username = auth.current_user()
     app.logger.info(username)
@@ -304,15 +324,13 @@ def update_strategy(sid):
 @auto.doc()
 @auth.login_required()
 def start_ide(sid):
-    """Change fields of one strategy
+    """Star IDE for one strategy, return 200, 401 or 404
 
-    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
+    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
     200
-    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
-    404
-    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/start
-    200
-    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/start
+    $ curl -u foo:bar -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
+    401
+    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/foobar/start
     404
 
     """
@@ -336,15 +354,13 @@ def start_ide(sid):
 @auto.doc()
 @auth.login_required()
 def stop_ide(sid):
-    """Change fields of one strategy
+    """Stop IDE for one strategy, return 200, 401 or 404
 
-    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
+    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
     200
-    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
-    404
-    $ curl -u user1:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/stop
-    200
-    $ curl -u admin:85114481 -i -X PUT -k https://localhost:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/stop
+    $ curl -u foo:bar -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
+    401
+    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/foobar/stop
     404
 
     """
@@ -361,27 +377,6 @@ def stop_ide(sid):
     remove_container(strategy[0]['sid'])
     strategy[0]['theia'] = "not running"
     return jsonify({'strategy': strategy[0]})
-
-
-@app.before_first_request
-def before_first_request():
-    """Start a background thread that cleans up old tasks."""
-    def clean_old_tasks():
-        """
-        This function cleans up old tasks from our in-memory data structure.
-        """
-        global tasks
-        while True:
-            # Only keep tasks that are running or that finished less than 5
-            # minutes ago.
-            five_min_ago = datetime.timestamp(datetime.utcnow()) - 5 * 60
-            tasks = {task_id: task for task_id, task in tasks.items()
-                     if 'completion_timestamp' not in task or task['completion_timestamp'] > five_min_ago}
-            time.sleep(60)
-
-    if not current_app.config['TESTING']:
-        thread = threading.Thread(target=clean_old_tasks)
-        thread.start()
 
 
 def async_api(wrapped_function):
@@ -474,10 +469,44 @@ class BuildDocker(Resource):
         return json, 200 if rc == 0 else rc
 
 
-# curl -k https://admin:85114481@127.0.0.1:5000/YJMDUH9zuwXf8c6KT2CDEV/build
-api.add_resource(BuildDocker, '/api/v1.0/strategy/<sid>/build')
-# https://127.0.0.1:5000/status/<task_id>
-api.add_resource(GetTaskStatus, '/status/<task_id>')
+api.add_resource(BuildDocker, '/api/v1.0/strategy/<sid>/build')     # curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/build
+api.add_resource(GetTaskStatus, '/status/<task_id>')                # curl -u admin:85114481 -k https://127.0.0.1:5000/status/YJMDUH9zuwXf8c6KT2CDEV
+
+
+# private
+
+
+@app.before_first_request
+def before_first_request():
+    """Start a background thread that cleans up old tasks."""
+    def clean_old_tasks():
+        """
+        This function cleans up old tasks from our in-memory data structure.
+        """
+        global tasks
+        while True:
+            # Only keep tasks that are running or that finished less than 5
+            # minutes ago.
+            five_min_ago = datetime.timestamp(datetime.utcnow()) - 5 * 60
+            tasks = {task_id: task for task_id, task in tasks.items()
+                     if 'completion_timestamp' not in task or task['completion_timestamp'] > five_min_ago}
+            time.sleep(60)
+    def clean_containers():
+        # docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
+        for container in client.containers.list(all=True, filters={'ancestor': service_image}):
+            try:
+                cid = container.attrs.get(id)
+                container.stop()
+                if len(client.containers.list(all=True, filters={'id': cid})) != 0:
+                    container.remove()
+            except docker.errors.APIError:
+                app.logger.error("error when remove container")
+
+    if not current_app.config['TESTING']:
+        thread1 = threading.Thread(target=clean_old_tasks)
+        thread1.start()
+        thread2 = threading.Thread(target=clean_containers)
+        thread2.start()
 
 
 # frontend
@@ -509,14 +538,4 @@ def documentation():
 
 
 if __name__ == '__main__':
-    # docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
-    for container in client.containers.list(all=True, filters={'ancestor': service_image}):
-        try:
-            cid = container.attrs.get(id)
-            container.stop()
-            if len(client.containers.list(all=True, filters={'id': cid})) != 0:
-                container.remove()
-        except docker.errors.APIError:
-            app.logger.error("error when remove container")
-
     app.run(host='0.0.0.0', port='5000', debug=True, ssl_context='adhoc')

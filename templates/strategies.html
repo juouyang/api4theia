@@ -29,7 +29,10 @@
                     } else {
                         var $btn = $("#btn_" + sid);
                         $btn.button('reset');
-                        console.log(data)
+
+                        var textedJson = "";
+                        for (var key in data) textedJson += data[key] + "\n";
+                        $('#myTextarea').text(textedJson);
                     }
                 }
             }).done(function (data, status, xhr) {
