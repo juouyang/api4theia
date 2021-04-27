@@ -8,3 +8,5 @@ pyopenssl
 Rust
 Flask-RESTful==0.3.8
 Flask-CORS
+pytest==6.2.3
+pytest-stress==1.0.1
