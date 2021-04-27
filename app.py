@@ -553,4 +553,5 @@ def documentation():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port='5000', debug=True, ssl_context='adhoc')
+    context = ('dev.net.crt', 'dev.net.key')
+    app.run(host='0.0.0.0', port='5000', debug=True, ssl_context=context)
