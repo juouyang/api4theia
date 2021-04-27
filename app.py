@@ -62,15 +62,22 @@ def run_container(username, sid, strategy_name, port):
             os.system("cp -rf " + template_dir + "/reference/ " + folderpath)
             os.system("cp -rf " + template_dir + "/__main__.py " + folderpath)
 
+    if (len(client.images.list(name=service_image)) == 0):
+        return "docker.errors.ImageNotFound"
+
     if len(client.containers.list(all=True, filters={'name': sid})) == 0:
-        client.containers.run(
-            service_image,
-            auto_remove=True,
-            detach=True,
-            name=sid,
-            ports={'3000/tcp': port},
-            volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
-        )
+        try:
+            client.containers.run(
+                service_image,
+                auto_remove=True,
+                detach=True,
+                name=sid,
+                ports={'3000/tcp': port},
+                volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
+            )
+            return ""
+        except :
+            return "error when start container"
 
 
 def remove_container(sid):
@@ -324,7 +331,7 @@ def update_strategy(sid):
 @auto.doc()
 @auth.login_required()
 def start_ide(sid):
-    """Star IDE for one strategy, return 200, 401 or 404
+    """Star IDE for one strategy, return 200, 401, 404 or 500
 
     $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
     200
@@ -344,10 +351,14 @@ def start_ide(sid):
         abort(404)
 
     real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
-    run_container(real_user[0]['username'], strategy[0]
+    rc = run_container(real_user[0]['username'], strategy[0]
                   ['sid'], strategy[0]['name'], strategy[0]['port'])
-    strategy[0]['theia'] = "running"
-    return jsonify({'strategy': strategy[0]})
+    if (rc == ""):
+        strategy[0]['theia'] = "running"
+        return jsonify({'strategy': strategy[0]})
+    if (rc == "docker.errors.ImageNotFound"):
+        return rc, 404
+    return rc, 500
 
 
 @app.route('/api/v1.0/strategy/<sid>/stop', methods=['PUT'])
@@ -446,14 +457,15 @@ class BuildDocker(Resource):
         # perform some intensive processing
         print("starting processing task, sid: '%s'" % sid)
 
-        ## user ID
+        # user ID
         username = request.authorization['username']
-        ## strategy ID = sid
+        # strategy ID = sid
         path = username + "/" + sid
 
         app.logger.info(path)
 
-        child = sp.Popen("cd /media/nfs/theia/" + path + "; curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash", shell=True, stdout=sp.PIPE)
+        child = sp.Popen("cd /media/nfs/theia/" + path +
+                         "; curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash", shell=True, stdout=sp.PIPE)
         #child = sp.Popen("cd /media/nfs/theia/" + path + "; bash build.sh", shell=True, stdout=sp.PIPE)
         #child = sp.Popen("echo foo; echo bar", shell=True, stdout=sp.PIPE)
         console_output = str(child.communicate()[0].decode()).strip()
@@ -469,8 +481,10 @@ class BuildDocker(Resource):
         return json, 200 if rc == 0 else rc
 
 
-api.add_resource(BuildDocker, '/api/v1.0/strategy/<sid>/build')     # curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/build
-api.add_resource(GetTaskStatus, '/status/<task_id>')                # curl -u admin:85114481 -k https://127.0.0.1:5000/status/YJMDUH9zuwXf8c6KT2CDEV
+# curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/build
+api.add_resource(BuildDocker, '/api/v1.0/strategy/<sid>/build')
+# curl -u admin:85114481 -k https://127.0.0.1:5000/status/YJMDUH9zuwXf8c6KT2CDEV
+api.add_resource(GetTaskStatus, '/status/<task_id>')
 
 
 # private
@@ -491,6 +505,7 @@ def before_first_request():
             tasks = {task_id: task for task_id, task in tasks.items()
                      if 'completion_timestamp' not in task or task['completion_timestamp'] > five_min_ago}
             time.sleep(60)
+
     def clean_containers():
         # docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
         for container in client.containers.list(all=True, filters={'ancestor': service_image}):
