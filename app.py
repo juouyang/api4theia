@@ -72,7 +72,7 @@ def run_container(username, sid, strategy_name, port):
                 auto_remove=True,
                 detach=True,
                 name=sid,
-                ports={'3000/tcp': port},
+                ports={'443/tcp': port},
                 volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
             )
             return ""
@@ -255,7 +255,7 @@ def create_strategy():
         'sid': sid,
         'name': request.json['name'],
         'port': port,
-        'url': u'http://' + service_addr + ':' + str(port),
+        'url': u'https://' + service_addr + ':' + str(port),
         'theia': "not running"
     }
     strategies.append(strategy)
