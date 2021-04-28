@@ -40,11 +40,11 @@ service_image = "theia-python:aicots"
 service_addr = "192.168.233.136"
 service_port = 30000
 
-f = open('users.json')
+f = open('data/users.json')
 users = json.load(f)
 f.close()
 
-f = open('strategies.json')
+f = open('data/strategies.json')
 strategies = json.load(f)
 f.close()
 
@@ -84,7 +84,9 @@ def remove_container(sid):
     try:
         if len(client.containers.list(all=True, filters={'name': sid})) != 0:
             container = client.containers.get(sid)
-            container.stop()
+            container.stop(
+                timeout=1
+            )
             if len(client.containers.list(all=True, filters={'name': sid})) != 0:
                 container.remove()
     except:
@@ -249,7 +251,7 @@ def create_strategy():
             error="the service has reached its maximum number of container instances for username = "+username), 429))
 
     user[0]['strategies'].append(sid)
-    with open('users.json', 'w') as f:
+    with open('data/users.json', 'w') as f:
         json.dump(users, f)
     strategy = {
         'sid': sid,
@@ -259,7 +261,7 @@ def create_strategy():
         'theia': "not running"
     }
     strategies.append(strategy)
-    with open('strategies.json', 'w') as f:
+    with open('data/strategies.json', 'w') as f:
         json.dump(strategies, f)
     return jsonify({'strategy': strategy}), 201
 
@@ -287,10 +289,10 @@ def delete_strategy(sid):
     if len(strategy) == 0:
         abort(404)
     strategies.remove(strategy[0])
-    with open('strategies.json', 'w') as f:
+    with open('data/strategies.json', 'w') as f:
         json.dump(strategies, f)
     user[0]['strategies'].remove(sid)
-    with open('users.json', 'w') as f:
+    with open('data/users.json', 'w') as f:
         json.dump(users, f)
     return jsonify({'result': True})
 
@@ -322,7 +324,7 @@ def update_strategy(sid):
     if 'name' in request.json and type(request.json['name']) != str:
         abort(400)
     strategy[0]['name'] = request.json.get('name', strategy[0]['name'])
-    with open('strategies.json', 'w') as f:
+    with open('data/strategies.json', 'w') as f:
         json.dump(strategies, f)
     return jsonify({'strategy': strategy[0]})
 
@@ -553,5 +555,5 @@ def documentation():
 
 
 if __name__ == '__main__':
-    context = ('dev.net.crt', 'dev.net.key')
+    context = ('ssl/dev.net.crt', 'ssl/dev.net.key')
     app.run(host='0.0.0.0', port='5000', debug=True, ssl_context=context)
