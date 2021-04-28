@@ -142,6 +142,7 @@
                 $("#{{ strategy['sid'] }}").change(function (e) {
                     console.log("this.checked = " + this.checked)
                     var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + event.target.id + "/" + ((this.checked) ? "start" : "stop");
+                    this.disabled = true
                     $.ajax({
                         type: 'PUT',
                         url: action_api,
@@ -150,11 +151,12 @@
                     }).always(function (data, status, xhr) {
                         ret_code = xhr.status;
                         console.log('ret_code=' + ret_code)
+                        var $box = $("#{{ strategy['sid'] }}")
                         if (ret_code != 200)
                         {
-                            var $box = $("#{{ strategy['sid'] }}")
                             $box[0].checked = false
                         }
+                        $box[0].disabled = false
 
                         console.log(ret_code);
                         console.log(data);
