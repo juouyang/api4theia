@@ -253,7 +253,7 @@ def create_strategy():
 
     username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
-    if len(user[0]['strategies']) >= 3:
+    if len(user[0]['strategies']) >= 100:
         abort(make_response(jsonify(
             error="the service has reached its maximum number of container instances for username = "+username), 429))
 
