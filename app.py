@@ -515,21 +515,14 @@ def before_first_request():
                      if 'completion_timestamp' not in task or task['completion_timestamp'] > five_min_ago}
             time.sleep(60)
 
-    def clean_containers():
-        # docker rm $(docker stop $(docker ps -a -q  --filter ancestor=theia-python:aicots))
-        for container in client.containers.list(all=True, filters={'ancestor': service_image}):
-            try:
-                cid = container.attrs.get(id)
-                container.stop()
-                if len(client.containers.list(all=True, filters={'id': cid})) != 0:
-                    container.remove()
-            except docker.errors.APIError:
-                app.logger.error("error when remove container")
+    def update_containers():
+        # update container running status for all strategies
+        print("update container running status for all strategies")
 
     if not current_app.config['TESTING']:
         thread1 = threading.Thread(target=clean_old_tasks)
         thread1.start()
-        thread2 = threading.Thread(target=clean_containers)
+        thread2 = threading.Thread(target=update_containers)
         thread2.start()
 
 
