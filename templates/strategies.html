@@ -10,6 +10,13 @@
         const endpoint = "{{ url_for(request.endpoint) }}"
         const url = new URL("{{ request.url }}");
 
+        var adjectives = ["adamant", "adroit", "amatory", "animistic", "antic", "arcadian", "baleful", "bellicose", "bilious", "boorish", "calamitous", "caustic", "cerulean", "comely", "concomitant", "contumacious", "corpulent", "crapulous", "defamatory", "didactic", "dilatory", "dowdy", "efficacious", "effulgent", "egregious", "endemic", "equanimous", "execrable", "fastidious", "feckless", "fecund", "friable", "fulsome", "garrulous", "guileless", "gustatory", "heuristic", "histrionic", "hubristic", "incendiary", "insidious", "insolent", "intransigent", "inveterate", "invidious", "irksome", "jejune", "jocular", "judicious", "lachrymose", "limpid", "loquacious", "luminous", "mannered", "mendacious", "meretricious", "minatory", "mordant", "munificent", "nefarious", "noxious", "obtuse", "parsimonious", "pendulous", "pernicious", "pervasive", "petulant", "platitudinous", "precipitate", "propitious", "puckish", "querulous", "quiescent", "rebarbative", "recalcitant", "redolent", "rhadamanthine", "risible", "ruminative", "sagacious", "salubrious", "sartorial", "sclerotic", "serpentine", "spasmodic", "strident", "taciturn", "tenacious", "tremulous", "trenchant", "turbulent", "turgid", "ubiquitous", "uxorious", "verdant", "voluble", "voracious", "wheedling", "withering", "zealous"];
+        var nouns = ["ninja", "chair", "pancake", "statue", "unicorn", "rainbows", "laser", "senor", "bunny", "captain", "nibblets", "cupcake", "carrot", "gnomes", "glitter", "potato", "salad", "toejam", "curtains", "beets", "toilet", "exorcism", "dragons", "jellybeans", "snakes", "dolls", "bushes", "cookies", "apples", "ukulele", "kazoo", "banjo", "circus", "trampoline", "carousel", "carnival", "locomotive", "animator", "artisan", "artist", "colorist", "inker", "coppersmith", "director", "designer", "flatter", "stylist", "leadman", "limner", "model", "musician", "penciller", "producer", "scenographer", "silversmith", "teacher", "beader", "foreman", "mechanic", "miller", "moldmaker", "patternmaker", "plumber", "sawfiler", "soaper", "wheelwright", "woodworkers"];
+        function randomEl(list) {
+            var i = Math.floor(Math.random() * list.length);
+            return list[i];
+        }
+
         const strategies = JSON.parse('{{ strategies | tojson | safe }}');
         const username = "{{ g.user['username'] }}"
         const password = "{{ g.user['password'] }}"
@@ -39,6 +46,10 @@
             }).fail(function (msg) {
             }).always(function (msg) {
             });
+        }
+
+        function a_onClick() {
+            window.scrollTo(0, document.body.scrollHeight);
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -129,88 +140,190 @@
 <body>
     <textarea name="" id="myTextarea"></textarea>
 
-    {% for strategy in strategies %}
-    <div>
-        <label class="switch">
-            {% if strategy['theia'] == "not running" %}
-            <input id="{{ strategy['sid'] }}" type="checkbox">
-            {% else %}
-            <input id="{{ strategy['sid'] }}" type="checkbox" checked>
-            {% endif %}
-            <span class="slider round"></span>
-            <script>
-                $("#{{ strategy['sid'] }}").change(function (e) {
-                    console.log("this.checked = " + this.checked)
-                    var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + event.target.id + "/" + ((this.checked) ? "start" : "stop");
-                    this.disabled = true
-                    $.ajax({
-                        type: 'PUT',
-                        url: action_api,
-                    }).done(function (xhr, status, msg) {
-                    }).fail(function (xhr, status, msg) {
-                    }).always(function (data, status, xhr) {
-                        ret_code = xhr.status;
-                        console.log('ret_code=' + ret_code)
-                        var $box = $("#{{ strategy['sid'] }}")
-                        if (ret_code != 200)
-                        {
-                            $box[0].checked = false
-                        }
-                        $box[0].disabled = false
+    <div class="input-group mb-3 needs-validation">
+        <input id="txt_sname" type="text" class="form-control" placeholder="Strategy's name"
+            aria-label="Strategy's name" aria-describedby="button-addon2" required>
+        <button id="btn_create_strategy" class="btn btn-outline-secondary" type="submit">Create</button>
+        <script>
+            $('#txt_sname').val(randomEl(adjectives) + '_' + randomEl(nouns));
+            function isASCII(str) {
+                return /^[\x00-\x7F]*$/.test(str);
+            }
 
-                        console.log(ret_code);
-                        console.log(data);
-                        console.log(status);
-                    });
+            function isEmpty(str) {
+                return (!str || str.length === 0);
+            }
+
+            $("#btn_create_strategy").click(function () {
+                var sname = $('#txt_sname').val();
+                console.log(sname)
+                if (!isASCII(sname) || isEmpty(sname)) {
+                    alert("invalid input, ASCII only");
+                    return;
+                }
+
+                var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies";
+                var dataJSON = {};
+                dataJSON["name"] = sname;
+
+                $.ajax({
+                    url: action_api,
+                    data: JSON.stringify(dataJSON),
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success: function (returnData) {
+                        $('#txt_sname').val("");
+                        location.reload();
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        console.log(xhr.status);
+                        console.log(thrownError);
+                    }
                 });
-
-                var sid = "{{ strategy['sid'] }}"
-                var desiredLink = "{{ strategy['url'] }}"
-                var desiredText = "Open IDE"
-                $('body').append($('<a href="' + desiredLink + '" target="iframe_a">' + desiredText + '</a><br>'));
-            </script>
-        </label>
-        {{ strategy['name'] }}
-        <button type="button" class="btn btn-danger btn-lg loading buttonload" id="btn_{{ strategy['sid'] }}"
-            data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Building...">
-            <script>
-                $("#btn_{{ strategy['sid'] }}").unbind().click(function () {
-                    var $btn = $(this);
-                    $btn.button('loading');
-
-                    var sid = "{{ strategy['sid'] }}";
-                    //var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + username + "/" + sid;
-                    var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid + "/build"
-
-                    $.ajax({
-                        type: 'GET',
-                        crossDomain: true,
-                        url: action_api,
-                    }).done(function (data, status, xhr) {
-                        if (xhr.status == "202") {
-                            status_endpoint = data;
-                            check_build_status(status_endpoint, sid);
-                        }
-                    }).done(function (data, status, xhr) {
-                    }).fail(function (msg) {
-                    }).always(function (msg) {
-                    });
-                });
-            </script>
-            Build
-        </button>
-        <br>
+            });
+        </script>
     </div>
+
+    {% for strategy in strategies %}
+    <ul class="nav nav-fill">
+        <li class="nav-item">
+            <div class="btn-group me-2 btn-group-sm" role="group" aria-label="First group">
+                <button id="btn_delete_{{ strategy['sid'] }}" type="button" class="btn btn-danger">
+                    Delete
+                    <script>
+                        $("#btn_delete_{{ strategy['sid'] }}").click(function () {
+                            var sid = "{{ strategy['sid'] }}"
+                            console.log("delete " + sid)
+                            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies/" + sid;
+
+                            $.ajax({
+                                url: action_api,
+                                type: "DELETE",
+                                success: function (returnData) {
+                                    location.reload();
+                                },
+                                error: function (xhr, ajaxOptions, thrownError) {
+                                    console.log(xhr.status);
+                                    console.log(thrownError);
+                                }
+                            });
+                        });
+                    </script>
+                </button>
+                <input id="txt_sname_{{ strategy['sid'] }}" type="text" placeholder="{{ strategy['name'] }}">
+                <button id="btn_update_{{ strategy['sid'] }}" type="button" class="btn btn-primary">
+                    Update
+                    <script>
+                        $("#btn_update_{{ strategy['sid'] }}").click(function () {
+                            var sid = "{{ strategy['sid'] }}"
+                            console.log("update " + sid)
+                            sname = $("#txt_sname_{{ strategy['sid'] }}").val();
+
+                            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid;
+                            var dataJSON = {};
+                            dataJSON["name"] = sname;
+
+                            $.ajax({
+                                url: action_api,
+                                data: JSON.stringify(dataJSON),
+                                type: "PUT",
+                                dataType: "json",
+                                contentType: "application/json;charset=utf-8",
+                                success: function (returnData) {
+                                    location.reload();
+                                },
+                                error: function (xhr, ajaxOptions, thrownError) {
+                                    console.log(xhr.status);
+                                    console.log(thrownError);
+                                }
+                            });
+                        });
+                    </script>
+                </button>
+            </div>
+        </li>
+        <li class="nav-item">
+            <div class="btn-group me-2" role="group" aria-label="Second group">
+                <label class="switch">
+                    {% if strategy['theia'] == "not running" %}
+                    <input id="{{ strategy['sid'] }}" type="checkbox">
+                    {% else %}
+                    <input id="{{ strategy['sid'] }}" type="checkbox" checked>
+                    {% endif %}
+                    <span class="slider round"></span>
+                    <script>
+                        $("#{{ strategy['sid'] }}").change(function (e) {
+                            console.log("this.checked = " + this.checked)
+                            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + event.target.id + "/" + ((this.checked) ? "start" : "stop");
+                            this.disabled = true
+                            $.ajax({
+                                type: 'PUT',
+                                url: action_api,
+                            }).done(function (xhr, status, msg) {
+                            }).fail(function (xhr, status, msg) {
+                            }).always(function (data, status, xhr) {
+                                ret_code = xhr.status;
+                                console.log('ret_code=' + ret_code)
+                                var $box = $("#{{ strategy['sid'] }}")
+                                if (ret_code != 200) {
+                                    $box[0].checked = false
+                                }
+                                $box[0].disabled = false
+
+                                console.log(ret_code);
+                                console.log(data);
+                                console.log(status);
+                            });
+                        });
+                    </script>
+                </label>
+                <div class="input-group-text" id="btnGroupAddon">Start / Stop IDE</div>
+                <a class="btn btn-link" href="{{ strategy['url'] }}" target="iframe_a" onClick="a_onClick()">Open
+                    IDE</a>
+                <button type="button" class="btn btn-outline-primary loading buttonload"
+                    id="btn_build_{{ strategy['sid'] }}"
+                    data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Building...">
+                    <script>
+                        $("#btn_build_{{ strategy['sid'] }}").unbind().click(function () {
+                            var $btn = $(this);
+                            $btn.button('loading');
+
+                            var sid = "{{ strategy['sid'] }}";
+                            //var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + username + "/" + sid;
+                            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid + "/build"
+
+                            $.ajax({
+                                type: 'GET',
+                                crossDomain: true,
+                                url: action_api,
+                            }).done(function (data, status, xhr) {
+                                if (xhr.status == "202") {
+                                    status_endpoint = data;
+                                    check_build_status(status_endpoint, sid);
+                                }
+                            }).done(function (data, status, xhr) {
+                            }).fail(function (msg) {
+                            }).always(function (msg) {
+                            });
+                        });
+                    </script>
+                    Pack Docker Image
+                </button>
+            </div>
+        </li>
+    </ul>
     {% endfor %}
 
     <br>
 
-    <iframe name="iframe_a" src="" width="100%" height="900" frameBorder="0"></iframe>
+    <iframe id="iframe_a" name="iframe_a" src="" width="100%" height="900" frameBorder="0"></iframe>
 </body>
 <script>
     $(document).ready(function () {
         var textedJson = JSON.stringify(strategies, undefined, 4).replace(/\\"/g, '"');
         $('#myTextarea').text(textedJson);
+        $('#iframe_a').attr('src', "");
     });
 </script>
 

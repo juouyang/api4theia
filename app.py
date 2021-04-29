@@ -55,8 +55,8 @@ def run_container(username, sid, strategy_name, port):
         os.system("mkdir -p " + source_dir_path)
         if os.path.isdir(template_dir):
             os.system("cp -rf " + template_dir + "/* " + source_dir_path)
-            os.system("mv -f " + source_dir_path + '/Your_Strategy.py ' +
-                      source_dir_path + '/' + strategy_name + '.py')
+            os.system("mv -f " + source_dir_path + '/Your_Strategy.py \"' +
+                      source_dir_path + '/' + strategy_name + '.py\"')
     else:
         if os.path.isdir(template_dir):
             os.system("cp -rf " + template_dir + "/reference/ " + source_dir_path)
@@ -469,7 +469,7 @@ class BuildDocker(Resource):
         # user ID
         username = request.authorization['username']
         # strategy ID = sid
-        path = username + "/" + sid
+        path = username + "/" + sid + "/src"
 
         app.logger.info(path)
 
