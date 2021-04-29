@@ -50,17 +50,21 @@ f.close()
 
 
 def run_container(username, sid, strategy_name, port):
-    folderpath = volume_root + '/' + username + '/' + sid
-    if not os.path.isdir(folderpath):
-        os.system("mkdir -p " + folderpath)
+    source_dir_path = volume_root + '/' + username + '/' + sid + '/src'
+    if not os.path.isdir(source_dir_path):
+        os.system("mkdir -p " + source_dir_path)
         if os.path.isdir(template_dir):
-            os.system("cp -rf " + template_dir + "/* " + folderpath)
-            os.system("mv -f " + folderpath + '/Your_Strategy.py ' +
-                      folderpath + '/' + strategy_name + '.py')
+            os.system("cp -rf " + template_dir + "/* " + source_dir_path)
+            os.system("mv -f " + source_dir_path + '/Your_Strategy.py ' +
+                      source_dir_path + '/' + strategy_name + '.py')
     else:
         if os.path.isdir(template_dir):
-            os.system("cp -rf " + template_dir + "/reference/ " + folderpath)
-            os.system("cp -rf " + template_dir + "/__main__.py " + folderpath)
+            os.system("cp -rf " + template_dir + "/reference/ " + source_dir_path)
+            os.system("cp -rf " + template_dir + "/__main__.py " + source_dir_path)
+
+    theia_config_dir_path = volume_root + '/' + username + '/' + sid + '/theia_config'
+    if not os.path.isdir(theia_config_dir_path):
+        os.system("mkdir -p " + theia_config_dir_path)
 
     if (len(client.images.list(name=service_image)) == 0):
         return "docker.errors.ImageNotFound"
@@ -73,7 +77,10 @@ def run_container(username, sid, strategy_name, port):
                 detach=True,
                 name=sid,
                 ports={'443/tcp': port},
-                volumes={folderpath + '/': {'bind': '/home/project/', 'mode': 'rw'}}
+                volumes={
+                    source_dir_path + '/': {'bind': '/home/project/', 'mode': 'rw'},
+                    theia_config_dir_path + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
+                }
             )
             return ""
         except :
