@@ -555,6 +555,7 @@ def documentation():
 if __name__ == '__main__':
     def sync_containers_status():
         for strategy in strategies:
+            strategy['theia'] = "not running"
             if len(client.containers.list(all=True, filters={'name': strategy['sid']})) == 1:
                 strategy['theia'] = "running"
     thread = threading.Thread(target=sync_containers_status)
