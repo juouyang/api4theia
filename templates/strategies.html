@@ -34,7 +34,7 @@
                             check_build_status(status_endpoint, sid);
                         }, 1000);
                     } else {
-                        var $btn = $("#btn_" + sid);
+                        var $btn = $("#btn_build_" + sid);
                         $btn.button('reset');
 
                         var textedJson = "";
@@ -49,7 +49,7 @@
         }
 
         function a_onClick() {
-            window.scrollTo(0, document.body.scrollHeight);
+            // window.scrollTo(0, document.body.scrollHeight);
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -283,7 +283,7 @@
                     IDE</a>
                 <button type="button" class="btn btn-outline-primary loading buttonload"
                     id="btn_build_{{ strategy['sid'] }}"
-                    data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Building...">
+                    data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Building ...........">
                     <script>
                         $("#btn_build_{{ strategy['sid'] }}").unbind().click(function () {
                             var $btn = $(this);
