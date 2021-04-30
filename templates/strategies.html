@@ -36,6 +36,8 @@
                     } else {
                         var $btn = $("#btn_build_" + sid);
                         $btn.button('reset');
+                        $btn.removeClass('btn-outline-primary');
+                        $btn.addClass('btn-success');
 
                         var textedJson = "";
                         for (var key in data) textedJson += data[key] + "\n";
@@ -43,7 +45,15 @@
                     }
                 }
             }).done(function (data, status, xhr) {
-            }).fail(function (msg) {
+            }).fail(function (data) {
+                var $btn = $("#btn_build_" + sid);
+                $btn.button('reset');
+                $btn.removeClass('btn-outline-primary');
+                $btn.addClass('btn-warning');
+
+                var textedJson = "";
+                for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
+                $('#myTextarea').text(textedJson);
             }).always(function (msg) {
             });
         }
