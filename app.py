@@ -21,6 +21,7 @@ import logging
 import subprocess as sp
 import threading
 import time
+import re
 
 
 log = logging.getLogger('werkzeug')
@@ -318,7 +319,6 @@ def update_strategy(sid):
     404
     """
     username = auth.current_user()
-    app.logger.info(username)
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     if (not sid in user[0]['strategies']) and (user[0]['is_admin'] != True):
         abort(404)
@@ -330,9 +330,13 @@ def update_strategy(sid):
         abort(400)
     if 'name' in request.json and type(request.json['name']) != str:
         abort(400)
-    strategy[0]['name'] = request.json.get('name', strategy[0]['name'])
+    new_name = request.json.get('name', strategy[0]['name'])
+    if not re.match("^[A-Za-z0-9_-]*$", new_name) or new_name == "":
+        abort(400)
+    strategy[0]['name'] = new_name
     with open('data/strategies.json', 'w') as f:
         json.dump(strategies, f)
+    # change filename of strategy
     return jsonify({'strategy': strategy[0]})
 
 
