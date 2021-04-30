@@ -515,15 +515,9 @@ def before_first_request():
                      if 'completion_timestamp' not in task or task['completion_timestamp'] > five_min_ago}
             time.sleep(60)
 
-    def update_containers():
-        # update container running status for all strategies
-        print("update container running status for all strategies")
-
     if not current_app.config['TESTING']:
-        thread1 = threading.Thread(target=clean_old_tasks)
-        thread1.start()
-        thread2 = threading.Thread(target=update_containers)
-        thread2.start()
+        thread = threading.Thread(target=clean_old_tasks)
+        thread.start()
 
 
 # frontend
@@ -555,5 +549,12 @@ def documentation():
 
 
 if __name__ == '__main__':
+    def sync_containers_status():
+        for strategy in strategies:
+            if len(client.containers.list(all=True, filters={'name': strategy['sid']})) == 1:
+                strategy['theia'] = "running"
+    thread = threading.Thread(target=sync_containers_status)
+    thread.start()
+
     context = ('ssl/dev.net.crt', 'ssl/dev.net.key')
     app.run(host='0.0.0.0', port='5000', debug=True, ssl_context=context)
