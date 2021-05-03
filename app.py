@@ -38,7 +38,7 @@ client = docker.from_env()
 volume_root = "/media/nfs/theia"
 template_dir = "/root/builds/1_aicots/Doquant/Strategy"
 service_image = "theia-python:aicots"
-service_addr = "192.168.233.136"
+service_addr = "pve.dev.net"
 service_port = 30000
 
 f = open('data/users.json')
