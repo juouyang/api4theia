@@ -1,7 +1,5 @@
 #!venv/bin/python
-from flask import Flask, g, abort, current_app, request, url_for, jsonify
-from flask import make_response
-from flask import render_template
+from flask import Flask, g, abort, current_app, request, url_for, jsonify, make_response, render_template
 
 from flask_httpauth import HTTPBasicAuth
 from flask_selfdoc import Autodoc
@@ -40,6 +38,7 @@ template_dir = "/root/builds/1_aicots/Doquant/Strategy"
 service_image = "theia-python:aicots"
 service_addr = "pve.dev.net"
 service_port = 30000
+pack_command = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 
 f = open('data/users.json')
 users = json.load(f)
@@ -98,7 +97,7 @@ def remove_container(sid):
             if len(client.containers.list(all=True, filters={'name': sid})) != 0:
                 container.remove()
     except:
-        app.logger.error("error when stop container")
+        app.logger.error("exception while stopping container")
 
 
 def cleanup_volume(username, sid):
@@ -475,10 +474,7 @@ class BuildDocker(Resource):
         # strategy ID = sid
         path = username + "/" + sid + "/src"
 
-        app.logger.info(path)
-
-        child = sp.Popen("cd /media/nfs/theia/" + path +
-                         "; curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash", shell=True, stdout=sp.PIPE)
+        child = sp.Popen("cd /media/nfs/theia/" + path + "; " + pack_command, shell=True, stdout=sp.PIPE)
         #child = sp.Popen("cd /media/nfs/theia/" + path + "; bash build.sh", shell=True, stdout=sp.PIPE)
         #child = sp.Popen("echo foo; echo bar", shell=True, stdout=sp.PIPE)
         console_output = str(child.communicate()[0].decode()).strip()
