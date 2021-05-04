@@ -23,7 +23,7 @@ import re
 
 
 log = logging.getLogger('werkzeug')
-#log.setLevel(logging.ERROR)
+log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 CORS(app)
