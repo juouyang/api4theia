@@ -2,7 +2,7 @@ import pytest
 import requests
 import json
 
-service_addr = "192.168.233.136"
+service_addr = "pve.dev.net"
 
 def test_get_strategies_of_a_user():
     response = requests.get(
