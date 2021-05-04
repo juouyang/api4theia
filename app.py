@@ -23,7 +23,7 @@ import re
 
 
 log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+#log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 CORS(app)
@@ -34,7 +34,7 @@ tasks = {}
 
 client = docker.from_env()
 volume_root = "/media/nfs/theia"
-template_dir = "/root/builds/1_aicots/Doquant/Strategy"
+template_dir = "/root/builds/Doquant/Strategy"
 service_image = "theia-python:aicots"
 service_addr = "pve.dev.net"
 service_port = 30000
@@ -255,7 +255,7 @@ def create_strategy():
     user = list(filter(lambda t: str(t['username']) == str(username), users))
     if len(user[0]['strategies']) >= 100:
         abort(make_response(jsonify(
-            error="the service has reached its maximum number of container instances for username = "+username), 429))
+            error="the service has reached its maximum number of strategy for user = "+username), 429))
 
     user[0]['strategies'].append(sid)
     with open('data/users.json', 'w') as f:
@@ -265,7 +265,8 @@ def create_strategy():
         'name': request.json['name'],
         'port': port,
         'url': u'https://' + service_addr + ':' + str(port),
-        'theia': "not running"
+        'theia': "not running",
+        'uid': user[0]['uid']
     }
     strategies.append(strategy)
     with open('data/strategies.json', 'w') as f:
@@ -343,7 +344,7 @@ def update_strategy(sid):
 @auto.doc()
 @auth.login_required()
 def start_ide(sid):
-    """Star IDE for one strategy, return 200, 401, 404 or 500
+    """Star IDE for one strategy, return 200, 401, 404, 429 or 500
 
     $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
     200
@@ -361,13 +362,24 @@ def start_ide(sid):
     strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
     if len(strategy) == 0:
         abort(404)
+    s = strategy[0]
 
-    real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
-    rc = run_container(real_user[0]['username'], strategy[0]
-                  ['sid'], strategy[0]['name'], strategy[0]['port'])
+    user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
+    if len(strategy) == 0:
+        abort(404)
+    u = user[0]
+
+    ## count running container, if > 2 then return 429
+    uid = u['uid']
+    running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', strategies))
+    if (len(running_theia_of_user) >= 2):
+        abort(make_response(jsonify(
+            error="the service has reached its maximum number of container for user = "+username), 429))
+
+    rc = run_container(u['username'], s['sid'], s['name'], s['port'])
     if (rc == ""):
-        strategy[0]['theia'] = "running"
-        return jsonify({'strategy': strategy[0]})
+        s['theia'] = "running"
+        return jsonify(s)
     if (rc == "docker.errors.ImageNotFound"):
         return rc, 404
     return rc, 500
@@ -396,10 +408,10 @@ def stop_ide(sid):
     if len(strategy) == 0:
         abort(404)
 
-    real_user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
-    remove_container(strategy[0]['sid'])
-    strategy[0]['theia'] = "not running"
-    return jsonify({'strategy': strategy[0]})
+    s = strategy[0]
+    remove_container(s['sid'])
+    s['theia'] = "not running"
+    return jsonify(s)
 
 
 def async_api(wrapped_function):

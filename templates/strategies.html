@@ -166,7 +166,6 @@
 
             $("#btn_create_strategy").click(function () {
                 var sname = $('#txt_sname').val();
-                console.log(sname)
                 if (!isASCII(sname) || isEmpty(sname)) {
                     alert("invalid input, ASCII only");
                     return;
@@ -187,8 +186,7 @@
                         location.reload();
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
-                        console.log(xhr.status);
-                        console.log(thrownError);
+                        $('#myTextarea').text(xhr.status + "\n" + thrownError);
                     }
                 });
             });
@@ -204,7 +202,6 @@
                     <script>
                         $("#btn_delete_{{ strategy['sid'] }}").click(function () {
                             var sid = "{{ strategy['sid'] }}"
-                            console.log("delete " + sid)
                             var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies/" + sid;
 
                             $.ajax({
@@ -214,8 +211,7 @@
                                     location.reload();
                                 },
                                 error: function (xhr, ajaxOptions, thrownError) {
-                                    console.log(xhr.status);
-                                    console.log(thrownError);
+                                    $('#myTextarea').text(xhr.status + "\n" + thrownError);
                                 }
                             });
                         });
@@ -227,7 +223,6 @@
                     <script>
                         $("#btn_update_{{ strategy['sid'] }}").click(function () {
                             var sid = "{{ strategy['sid'] }}"
-                            console.log("update " + sid)
                             sname = $("#txt_sname_{{ strategy['sid'] }}").val();
 
                             var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid;
@@ -244,8 +239,7 @@
                                     location.reload();
                                 },
                                 error: function (xhr, ajaxOptions, thrownError) {
-                                    console.log(xhr.status);
-                                    console.log(thrownError);
+                                    $('#myTextarea').text(xhr.status + "\n" + thrownError);
                                 }
                             });
                         });
@@ -264,26 +258,32 @@
                     <span class="slider round"></span>
                     <script>
                         $("#{{ strategy['sid'] }}").change(function (e) {
-                            console.log("this.checked = " + this.checked)
                             var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + event.target.id + "/" + ((this.checked) ? "start" : "stop");
                             this.disabled = true
                             $.ajax({
                                 type: 'PUT',
                                 url: action_api,
-                            }).done(function (xhr, status, msg) {
-                            }).fail(function (xhr, status, msg) {
-                            }).always(function (data, status, xhr) {
-                                ret_code = xhr.status;
-                                console.log('ret_code=' + ret_code)
-                                var $box = $("#{{ strategy['sid'] }}")
-                                if (ret_code != 200) {
-                                    $box[0].checked = false
+                                success: function (data, status, xhr) {
+                                    ret_code = xhr.status;
+                                    var $box = $("#{{ strategy['sid'] }}")
+                                    if (ret_code != 200) {
+                                        $box[0].checked = false
+                                    }
+                                    $box[0].disabled = false
+
+                                    var textedJson = JSON.stringify(data, undefined, 4).replace(/\\"/g, '"');
+                                    $('#myTextarea').text(textedJson);
                                 }
+                            }).done(function (xhr, status, msg) {
+                            }).fail(function (data) {
+                                var $box = $("#{{ strategy['sid'] }}")
+                                $box[0].checked = false
                                 $box[0].disabled = false
 
-                                console.log(ret_code);
-                                console.log(data);
-                                console.log(status);
+                                var textedJson = "";
+                                for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
+                                $('#myTextarea').text(textedJson);
+                            }).always(function (data, status, xhr) {
                             });
                         });
                     </script>

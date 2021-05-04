@@ -88,13 +88,18 @@ def test_get_strategy_field_by_sid_and_key():
 
 
 def test_create_delete_a_strategy():
-    response = requests.post("https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
+    new_strategy_list = []
+
+    # create strategy until reach 100
+    for i in range(98):
+        response = requests.post("https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
                              data='{"name": "my_strategy_c"}',
                              headers={'Content-Type': 'application/json'}, verify=False)
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.status_code == 201
-    resp_body = response.json()
-    created_sid = resp_body['strategy']['sid']
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 201
+        resp_body = response.json()
+        created_sid = resp_body['strategy']['sid']
+        new_strategy_list.append(created_sid)
 
     response = requests.post("https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
                              data='{"name": "my_strategy_c"}',
@@ -107,12 +112,13 @@ def test_create_delete_a_strategy():
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
     resp_body = response.json()
-    assert len(resp_body['strategies']) == 3
+    assert len(resp_body['strategies']) == 100
 
-    response = requests.delete(
-        "https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies/" + str(created_sid), verify=False)
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.status_code == 200
+    for sid in new_strategy_list:
+        response = requests.delete(
+            "https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies/" + sid, verify=False)
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
 
     response = requests.post("https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
                              data='{"name": "my_strategy_c"}',
