@@ -39,6 +39,8 @@ service_image = "theia-python:aicots"
 service_addr = "pve.dev.net"
 service_port = 30000
 pack_command = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
+running_container_per_user = 3
+max_strategy_count = 100
 
 f = open('data/users.json')
 users = json.load(f)
@@ -253,7 +255,7 @@ def create_strategy():
 
     username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
-    if len(user[0]['strategies']) >= 100:
+    if len(user[0]['strategies']) >= max_strategy_count:
         abort(make_response(jsonify(
             error="the service has reached its maximum number of strategy for user = "+username), 429))
 
@@ -369,10 +371,10 @@ def start_ide(sid):
         abort(404)
     u = user[0]
 
-    ## count running container, if > 2 then return 429
+    ## check running container, return 429 if more than limit
     uid = u['uid']
     running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', strategies))
-    if (len(running_theia_of_user) >= 2):
+    if (len(running_theia_of_user) >= running_container_per_user):
         abort(make_response(jsonify(
             error="the service has reached its maximum number of container for user = "+username), 429))
 
