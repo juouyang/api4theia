@@ -94,7 +94,7 @@ def remove_container(sid):
         if len(client.containers.list(all=True, filters={'name': sid})) != 0:
             container = client.containers.get(sid)
             container.stop(
-                timeout=1
+                timeout=0
             )
             if len(client.containers.list(all=True, filters={'name': sid})) != 0:
                 container.remove()
