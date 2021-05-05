@@ -77,7 +77,7 @@ def test_get_strategy_field_by_sid_and_key():
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
     resp_body = response.json()
-    assert resp_body['name'] == "my_strategy_a"
+    assert resp_body['name'] == "my_strategy_1"
 
     response = requests.get(
         "https://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/url", verify=False)
