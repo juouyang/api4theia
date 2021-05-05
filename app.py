@@ -41,6 +41,14 @@ service_port = 30000
 pack_command = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 running_container_per_user = 3
 max_strategy_count = 100
+gitignore = '''
+/.pytest_cache/
+__pycache__/
+*.py[cod]
+/venv/
+/.vscode/
+**/log
+'''
 
 f = open('data/users.json')
 users = json.load(f)
@@ -59,7 +67,9 @@ def run_container(username, sid, strategy_name, port):
             os.system("cp -rf " + template_dir + "/* " + source_dir_path)
             os.system("mv -f " + source_dir_path + '/Your_Strategy.py \"' +
                       source_dir_path + '/' + strategy_name + '.py\"')
-        os.system("cd " + source_dir_path + ";git init;git config user.email 'root@local';git add ./*;git commit -m 'first commit'")
+        with open(source_dir_path + "/.gitignore", "w") as out:
+            out.write(gitignore)
+        os.system("cd " + source_dir_path + ";git init;git config user.email 'root@local';git add ./*;git add .gitignore;git commit -m 'first commit'")
     else:
         if os.path.isdir(template_dir):
             os.system("cp -rf " + template_dir + "/reference/ " + source_dir_path)
