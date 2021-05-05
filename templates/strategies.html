@@ -279,10 +279,14 @@
                                 var $box = $("#{{ strategy['sid'] }}")
                                 $box[0].checked = false
                                 $box[0].disabled = false
+                                if (data.responseJSON)
+                                {
+                                    var textedJson = "";
+                                    for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
+                                    $('#myTextarea').text(data.responseText + textedJson);
+                                }
+                                else $('#myTextarea').text(data.responseText);
 
-                                var textedJson = "";
-                                for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
-                                $('#myTextarea').text(textedJson);
                             }).always(function (data, status, xhr) {
                             });
                         });
