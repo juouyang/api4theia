@@ -48,6 +48,8 @@ __pycache__/
 /venv/
 /.vscode/
 **/log
+**/.theia
+**/.sandbox
 '''
 
 f = open('data/users.json')
