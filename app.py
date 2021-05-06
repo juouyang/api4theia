@@ -21,80 +21,58 @@ import threading
 import time
 import re
 
-
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
-
 app = Flask(__name__)
-CORS(app)
+app.config.from_pyfile('default_settings.py')
+
+logging.getLogger('werkzeug').setLevel(app.config['LOG_LEVEL'])
+
+cors = CORS(app)
 auto = Autodoc(app)
 api = Api(app)
 
-tasks = {}
-
 client = docker.from_env()
-volume_root = "/media/nfs/theia"
-template_dir = "/root/builds/Doquant/Strategy"
-service_image = "theia-python:aicots"
-service_addr = "pve.dev.net"
-service_port = 30000
-pack_command = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
-running_container_per_user = 3
-max_strategy_count = 100
-gitignore = '''
-/.pytest_cache/
-__pycache__/
-*.py[cod]
-/venv/
-/.vscode/
-**/log
-**/.theia
-**/.sandbox
-'''
 
-f = open('data/users.json')
-users = json.load(f)
-f.close()
+with open('data/users.json') as f:
+    users = json.load(f)
 
-f = open('data/strategies.json')
-strategies = json.load(f)
-f.close()
+with open('data/strategies.json') as f:
+    strategies = json.load(f)
 
 
-def run_container(username, sid, strategy_name, port):
-    source_dir_path = volume_root + '/' + username + '/' + sid + '/src'
-    if not os.path.isdir(source_dir_path):
-        os.system("mkdir -p " + source_dir_path)
-        if os.path.isdir(template_dir):
-            os.system("cp -rf " + template_dir + "/* " + source_dir_path)
-            os.system("mv -f " + source_dir_path + '/Your_Strategy.py \"' +
-                      source_dir_path + '/' + strategy_name + '.py\"')
-        with open(source_dir_path + "/.gitignore", "w") as out:
-            out.write(gitignore)
-        os.system("cd " + source_dir_path + ";git init;git config user.email 'root@local';git add ./*;git add .gitignore;git commit -m 'first commit'")
-    else:
-        if os.path.isdir(template_dir):
-            os.system("cp -rf " + template_dir + "/reference/ " + source_dir_path)
-            os.system("cp -rf " + template_dir + "/__main__.py " + source_dir_path)
-
-    theia_config_dir_path = volume_root + '/' + username + '/' + sid + '/theia_config'
-    if not os.path.isdir(theia_config_dir_path):
-        os.system("mkdir -p " + theia_config_dir_path)
-
-    if (len(client.images.list(name=service_image)) == 0):
+def run_container(uid, sid, sname, port):
+    if (len(client.images.list(name=app.config['DOCKER_IMAGE'])) == 0):
         return "docker.errors.ImageNotFound"
+
+    src_template = app.config['STRATEGY_TEMPLATE']
+    src_path = app.config['THEIA_ROOT'] + '/' + uid + '/' + sid + '/src'
+    if not os.path.isdir(src_path):
+        os.makedirs(src_path, exist_ok=True)
+        if os.path.isdir(src_template):
+            sp.call("cp -rf " + src_template + "/* " + src_path, shell=True)
+            sp.call("mv -f " + src_path + '/Your_Strategy.py \"' + src_path + '/' + sname + '.py\"', shell=True)
+        with open(src_path + "/.gitignore", "w") as out:
+            out.write(app.config['GIT_IGNORE'])
+        sp.call("cd " + src_path + ";" + app.config['GIT_INIT'], shell=True)
+    else:
+        if os.path.isdir(src_template):
+            sp.call("cp -rf " + src_template + "/reference/ " + src_path, shell=True)
+            sp.call("cp -rf " + src_template + "/__main__.py " + src_path, shell=True)
+
+    theia_config_path = app.config['THEIA_ROOT'] + '/' + uid + '/' + sid + '/theia_config'
+    if not os.path.isdir(theia_config_path):
+        os.makedirs(theia_config_path, exist_ok=True)
 
     if len(client.containers.list(all=True, filters={'name': sid})) == 0:
         try:
             client.containers.run(
-                service_image,
+                app.config['DOCKER_IMAGE'],
                 auto_remove=True,
                 detach=True,
                 name=sid,
                 ports={'443/tcp': port},
                 volumes={
-                    source_dir_path + '/': {'bind': '/home/project/', 'mode': 'rw'},
-                    theia_config_dir_path + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
+                    src_path + '/': {'bind': '/home/project/', 'mode': 'rw'},
+                    theia_config_path + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
                 }
             )
             return ""
@@ -115,10 +93,10 @@ def remove_container(sid):
         app.logger.error("exception while stopping container")
 
 
-def cleanup_volume(username, sid):
-    folderpath = volume_root + '/' + username + '/' + sid
+def cleanup_volume(uid, sid):
+    folderpath = app.config['THEIA_ROOT'] + '/' + uid + '/' + sid
     remove_container(sid)
-    os.system("rm -rf " + folderpath)
+    sp.call("rm -rf " + folderpath, shell=True)
 
 
 # authentication
@@ -263,12 +241,12 @@ def create_strategy():
         abort(make_response(
             jsonify(error="the request should contain strategy name"), 400))
 
-    port = strategies[-1]['port'] + 1 if len(strategies) > 0 else service_port
+    port = strategies[-1]['port'] + 1 if len(strategies) > 0 else app.config['THEIA_PORT']
     sid = shortuuid.uuid()
 
     username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
-    if len(user[0]['strategies']) >= max_strategy_count:
+    if len(user[0]['strategies']) >= app.config['MAX_STRATEGY_NUM']:
         abort(make_response(jsonify(
             error="the service has reached its maximum number of strategy for user = "+username), 429))
 
@@ -279,7 +257,7 @@ def create_strategy():
         'sid': sid,
         'name': request.json['name'],
         'port': port,
-        'url': u'https://' + service_addr + ':' + str(port),
+        'url': u'https://' + app.config['DOCKER_HOST'] + ':' + str(port),
         'theia': "not running",
         'uid': user[0]['uid']
     }
@@ -387,7 +365,7 @@ def start_ide(sid):
     ## check running container, return 429 if more than limit
     uid = u['uid']
     running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', strategies))
-    if (len(running_theia_of_user) >= running_container_per_user):
+    if (len(running_theia_of_user) >= app.config['RUNNING_THEIA_PER_USER']):
         abort(make_response(jsonify(
             error="the service has reached its maximum number of container for user = "+username), 429))
 
@@ -428,6 +406,8 @@ def stop_ide(sid):
     s['theia'] = "not running"
     return jsonify(s)
 
+
+tasks = {}
 
 def async_api(wrapped_function):
     @wraps(wrapped_function)
@@ -501,7 +481,7 @@ class BuildDocker(Resource):
         # strategy ID = sid
         path = username + "/" + sid + "/src"
 
-        child = sp.Popen("cd /media/nfs/theia/" + path + "; " + pack_command, shell=True, stdout=sp.PIPE)
+        child = sp.Popen("cd /media/nfs/theia/" + path + "; " + app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)
         #child = sp.Popen("cd /media/nfs/theia/" + path + "; bash build.sh", shell=True, stdout=sp.PIPE)
         #child = sp.Popen("echo foo; echo bar", shell=True, stdout=sp.PIPE)
         console_output = str(child.communicate()[0].decode()).strip()
@@ -584,5 +564,5 @@ if __name__ == '__main__':
     thread = threading.Thread(target=sync_containers_status)
     thread.start()
 
-    context = ('ssl/dev.net.crt', 'ssl/dev.net.key')
-    app.run(host='0.0.0.0', port='5000', debug=True, ssl_context=context)
+    context = (app.config['CRT_FILE'], app.config['KEY_FILE'])
+    app.run(host='0.0.0.0', port='5000', debug=app.config['DEBUG'], ssl_context=context)
