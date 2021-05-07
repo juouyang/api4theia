@@ -17,7 +17,7 @@ __pycache__/
 *.py[cod]
 /venv/
 /.vscode/
-**/log
+**/log*
 **/.theia
 **/.sandbox
 **/.Trash*
