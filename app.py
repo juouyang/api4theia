@@ -73,7 +73,9 @@ def run_container(uid, sid, sname, port):
                 volumes={
                     src_path + '/': {'bind': '/home/project/', 'mode': 'rw'},
                     theia_config_path + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
-                }
+                },
+                mem_limit="1g",
+                privileged=False
             )
             return ""
         except :
