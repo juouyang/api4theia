@@ -10,6 +10,7 @@ from werkzeug.exceptions import HTTPException, InternalServerError
 
 from datetime import datetime
 from functools import wraps
+from urllib.parse import unquote
 
 import json
 import shortuuid
@@ -266,7 +267,7 @@ def create_strategy():
         json.dump(users, f)
     strategy = {
         'sid': sid,
-        'name': request.json['name'],
+        'name': unquote(request.json['name']),
         'port': port,
         'url': u'https://' + app.config['DOCKER_HOST'] + ':' + str(port),
         'theia': "not running",
@@ -337,9 +338,7 @@ def update_strategy(sid):
     if 'name' in request.json and type(request.json['name']) != str:
         abort(400)
     new_name = request.json.get('name', strategy[0]['name'])
-    if not re.match("^[A-Za-z0-9_-]*$", new_name) or new_name == "":
-        abort(400)
-    strategy[0]['name'] = new_name
+    strategy[0]['name'] = unquote(new_name)
     with open('data/strategies.json', 'w') as f:
         json.dump(strategies, f)
     # change filename of strategy
