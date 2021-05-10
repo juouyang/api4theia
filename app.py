@@ -52,6 +52,11 @@ def run_container(uid, sid, sname, port):
             sp.call("mv -f " + src_path + '/Your_Strategy.py \"' + src_path + '/' + sname + '.py\"', shell=True)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])
+        os.makedirs(src_path + '/.sandbox', exist_ok=True)
+        with open(src_path + '/.sandbox/01_matplotlib_example.py', "w") as out:
+            out.write(app.config['MATPLOTLIB_SAMPLE'])
+        with open(src_path + '/.sandbox/02_ploty_candlestick.py', "w") as out:
+            out.write(app.config['PLOTLY_SAMPLE'])
         sp.call("cd " + src_path + ";" + app.config['GIT_INIT'], shell=True)
     else:
         if os.path.isdir(src_template):
@@ -243,6 +248,10 @@ def create_strategy():
         abort(make_response(
             jsonify(error="the request should contain strategy name"), 400))
 
+    # if not request.json or not 'sid' in request.json:
+    #     abort(make_response(
+    #         jsonify(error="the request should contain strategy ID"), 400))
+
     port = strategies[-1]['port'] + 1 if len(strategies) > 0 else app.config['THEIA_PORT']
     sid = shortuuid.uuid()
 
@@ -285,16 +294,18 @@ def delete_strategy(sid):
     """
     username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
-    if not sid in user[0]['strategies']:
+    if not len(user) == 1 or not sid in user[0]['strategies']:
         abort(404)
-    cleanup_volume(username, sid)
+    u = user[0]
+    uid = u['uid']
+    cleanup_volume(uid, sid)
     strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
     if len(strategy) == 0:
         abort(404)
     strategies.remove(strategy[0])
     with open('data/strategies.json', 'w') as f:
         json.dump(strategies, f)
-    user[0]['strategies'].remove(sid)
+    u['strategies'].remove(sid)
     with open('data/users.json', 'w') as f:
         json.dump(users, f)
     return jsonify({'result': True})
@@ -371,7 +382,7 @@ def start_ide(sid):
         abort(make_response(jsonify(
             error="the service has reached its maximum number of container for user = "+username), 429))
 
-    rc = run_container(u['username'], s['sid'], s['name'], s['port'])
+    rc = run_container(uid, s['sid'], s['name'], s['port'])
     if (rc == ""):
         s['theia'] = "running"
         return jsonify(s)

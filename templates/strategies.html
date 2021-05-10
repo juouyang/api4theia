@@ -72,7 +72,7 @@
 
         textarea {
             width: 100%;
-            min-height: 9rem;
+            min-height: 6rem;
             font-family: "Lucida Console", Monaco, monospace;
             font-size: 0.8rem;
             line-height: 1.2;
@@ -184,10 +184,9 @@
                     success: function (returnData) {
                         $('#txt_sname').val("");
                         location.reload();
-                    },
-                    error: function (xhr, ajaxOptions, thrownError) {
-                        $('#myTextarea').text(xhr.status + "\n" + thrownError);
                     }
+                }).fail(function (data) {
+                    $('#myTextarea').text(data.responseText);
                 });
             });
         </script>
