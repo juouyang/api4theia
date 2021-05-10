@@ -9,7 +9,7 @@
     const endpoint = "{{ url_for(request.endpoint) }}"
     const url = new URL("{{ request.url }}");
 
-    const users = JSON.parse('{{ users | tojson | safe }}');
+    const users = '{{ users | tojson | safe }}';
   </script>
   <style>
     body {
@@ -42,8 +42,7 @@
 </body>
 <script>
   $(document).ready(function () {
-    var textedJson = JSON.stringify(users, undefined, 4).replace(/\\"/g, '"');
-    $('#myTextarea').text(textedJson);
+    $('#myTextarea').text(users);
   });
 </script>
 

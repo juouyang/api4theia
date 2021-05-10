@@ -17,7 +17,7 @@
             return list[i];
         }
 
-        const strategies = JSON.parse('{{ strategies | tojson | safe }}');
+        const strategies = '{{ strategies | tojson | safe }}'
         const username = "{{ g.user['username'] }}"
         const password = "{{ g.user['password'] }}"
 
@@ -330,8 +330,7 @@
 </body>
 <script>
     $(document).ready(function () {
-        var textedJson = JSON.stringify(strategies, undefined, 4).replace(/\\"/g, '"');
-        $('#myTextarea').text(textedJson);
+        $('#myTextarea').text(strategies);
         $('#iframe_a').attr('src', "");
     });
 </script>
