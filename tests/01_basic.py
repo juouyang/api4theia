@@ -13,7 +13,7 @@ def test_get_strategies_of_a_user():
     assert len(resp_body['strategies']) == 1
 
     response = requests.get(
-        "https://toast:85114481@127.0.0.1:5000/api/v1.0/strategies", verify=False)
+        "https://juice:85114481@127.0.0.1:5000/api/v1.0/strategies", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
     resp_body = response.json()
@@ -26,7 +26,7 @@ def test_get_strategy_by_sid():
     assert response.status_code == 200
 
     response = requests.get(
-        "https://toast:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV", verify=False)
+        "https://juice:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 404
 
@@ -51,7 +51,7 @@ def test_get_strategy_field_by_sid_and_key():
     assert response.status_code == 404
 
     response = requests.get(
-        "https://toast:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url", verify=False)
+        "https://juice:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 404
 
@@ -120,9 +120,9 @@ def test_get_all_users():
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
     resp_body = response.json()
-    assert len(resp_body['users']) == 11
+    assert len(resp_body['users']) == 12
 
     response = requests.get(
-        "https://toast:85114481@127.0.0.1:5000/api/v1.0/users", verify=False)
+        "https://juice:85114481@127.0.0.1:5000/api/v1.0/users", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 401
