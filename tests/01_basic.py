@@ -10,15 +10,14 @@ def test_get_strategies_of_a_user():
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
     resp_body = response.json()
-    assert len(resp_body['strategies']) == 2
+    assert len(resp_body['strategies']) == 1
 
     response = requests.get(
-        "https://user1:85114481@127.0.0.1:5000/api/v1.0/strategies", verify=False)
+        "https://toast:85114481@127.0.0.1:5000/api/v1.0/strategies", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
     resp_body = response.json()
-    assert len(resp_body['strategies']) == 1
-
+    assert len(resp_body['strategies']) == 0
 
 def test_get_strategy_by_sid():
     response = requests.get(
@@ -27,20 +26,9 @@ def test_get_strategy_by_sid():
     assert response.status_code == 200
 
     response = requests.get(
-        "https://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV", verify=False)
+        "https://toast:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 404
-
-    response = requests.get(
-        "https://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW", verify=False)
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.status_code == 200
-
-    response = requests.get(
-        "https://admin:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW", verify=False)
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.status_code == 404
-
 
 def test_get_strategy_field_by_sid_and_key():
     response = requests.get(
@@ -63,7 +51,7 @@ def test_get_strategy_field_by_sid_and_key():
     assert response.status_code == 404
 
     response = requests.get(
-        "https://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url", verify=False)
+        "https://toast:85114481@127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 404
 
@@ -72,28 +60,13 @@ def test_get_strategy_field_by_sid_and_key():
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 404
 
-    response = requests.get(
-        "https://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/name", verify=False)
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.status_code == 200
-    resp_body = response.json()
-    assert resp_body['name'] == "my_strategy_1"
-
-    response = requests.get(
-        "https://user1:85114481@127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW/url", verify=False)
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.status_code == 200
-    resp_body = response.json()
-    assert resp_body['url'] == "https://" + service_addr + ":30002"
-
-
 def test_create_delete_a_strategy():
     new_strategy_list = []
 
     # create strategy until reach 100
-    for i in range(98):
+    for i in range(99):
         response = requests.post("https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
-                             data='{"name": "my_strategy_c"}',
+                             data='{"name": "my_strategy_xx"}',
                              headers={'Content-Type': 'application/json'}, verify=False)
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 201
@@ -101,8 +74,15 @@ def test_create_delete_a_strategy():
         created_sid = resp_body['strategy']['sid']
         new_strategy_list.append(created_sid)
 
+    response = requests.get(
+        "https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies", verify=False)
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.status_code == 200
+    resp_body = response.json()
+    assert len(resp_body['strategies']) == 100
+
     response = requests.post("https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
-                             data='{"name": "my_strategy_c"}',
+                             data='{"name": "my_strategy_xx"}',
                              headers={'Content-Type': 'application/json'}, verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 429
@@ -121,7 +101,7 @@ def test_create_delete_a_strategy():
         assert response.status_code == 200
 
     response = requests.post("https://admin:85114481@127.0.0.1:5000/api/v1.0/strategies",
-                             data='{"name": "my_strategy_c"}',
+                             data='{"name": "my_strategy_xx"}',
                              headers={'Content-Type': 'application/json'}, verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 201
@@ -140,9 +120,9 @@ def test_get_all_users():
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 200
     resp_body = response.json()
-    assert len(resp_body['users']) == 2
+    assert len(resp_body['users']) == 11
 
     response = requests.get(
-        "https://user1:85114481@127.0.0.1:5000/api/v1.0/users", verify=False)
+        "https://toast:85114481@127.0.0.1:5000/api/v1.0/users", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 401
