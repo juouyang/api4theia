@@ -1,13 +1,18 @@
 TESTING = False
 DEBUG = False
+LOG_LEVEL = 40 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
+
+# change the following settings before run
+DOCKER_HOST = "theia.doquant.com"
 CRT_FILE = 'ssl/doquant.com.crt'
 KEY_FILE = 'ssl/doquant.com.key'
-LOG_LEVEL = 40 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
-THEIA_ROOT = "/media/aicots/ssd/theia"
-THEIA_PORT = 30000
 STRATEGY_TEMPLATE = "/home/aicots/builds/Doquant/Strategy"
+THEIA_ROOT = "/media/aicots/ssd/theia"
+#
+
+THEIA_PORT = 30000
 DOCKER_IMAGE = "theia-python:aicots"
-DOCKER_HOST = "theia.doquant.com"
+>>>>>>> master
 PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 RUNNING_THEIA_PER_USER = 3
 MAX_STRATEGY_NUM = 100
