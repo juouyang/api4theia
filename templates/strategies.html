@@ -21,6 +21,123 @@
         const username = "{{ g.user['username'] }}"
         const password = "{{ g.user['password'] }}"
 
+        function create_onClick() {
+            var sname = $('#txt_sname').val();
+
+            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies";
+            var dataJSON = {};
+            dataJSON["name"] = encodeURIComponent(sname);
+
+            $.ajax({
+                url: action_api,
+                data: JSON.stringify(dataJSON),
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success: function (returnData) {
+                    $('#txt_sname').val("");
+                    location.reload();
+                }
+            }).fail(function (data) {
+                $('#myTextarea').text(data.responseText);
+            });
+        }
+
+        function delete_onClick(clicked_id) {
+            var sid = clicked_id.substring(11);
+            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies/" + sid;
+
+            $.ajax({
+                url: action_api,
+                type: "DELETE",
+                success: function (returnData) {
+                    location.reload();
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    $('#myTextarea').text(xhr.status + "\n" + thrownError);
+                }
+            });
+        }
+
+        function update_onClick(clicked_id) {
+            var sid = clicked_id.substring(11);
+            sname = $("#txt_sname_" + sid).val();
+
+            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid;
+            var dataJSON = {};
+            dataJSON["name"] = encodeURIComponent(sname);
+
+            $.ajax({
+                url: action_api,
+                data: JSON.stringify(dataJSON),
+                type: "PUT",
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success: function (returnData) {
+                    location.reload();
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    $('#myTextarea').text(xhr.status + "\n" + thrownError);
+                }
+            });
+        }
+
+        function ide_onClick(clicked_id, on_off) {
+            var sid = clicked_id;
+            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid + "/" + ((on_off) ? "start" : "stop");
+
+            $("#" + sid).disabled = true
+
+            $.ajax({
+                type: 'PUT',
+                url: action_api,
+                success: function (data, status, xhr) {
+                    ret_code = xhr.status;
+                    var $box = $("#" + sid)
+                    if (ret_code != 200) {
+                        $box[0].checked = false
+                    }
+                    $box[0].disabled = false
+
+                    var textedJson = JSON.stringify(data, undefined, 4).replace(/\\"/g, '"');
+                    $('#myTextarea').text(textedJson);
+                }
+            }).done(function (xhr, status, msg) {
+            }).fail(function (data) {
+                var $box = $("#" + sid)
+                $box[0].checked = false
+                $box[0].disabled = false
+                if (data.responseJSON) {
+                    var textedJson = "";
+                    for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
+                    $('#myTextarea').text(data.responseText + textedJson);
+                }
+                else if (data.responseText) $('#myTextarea').text(data.responseText);
+            }).always(function (data, status, xhr) {
+            });
+        }
+
+        function docker_onClick(clicked_id) {
+            var sid = clicked_id.substring(11);
+            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid + "/build"
+
+            $("#btn_docker_" + sid).button('loading');
+
+            $.ajax({
+                type: 'GET',
+                crossDomain: true,
+                url: action_api,
+            }).done(function (data, status, xhr) {
+                if (xhr.status == "202") {
+                    status_endpoint = data;
+                    check_build_status(status_endpoint, sid);
+                }
+            }).done(function (data, status, xhr) {
+            }).fail(function (msg) {
+            }).always(function (msg) {
+            });
+        }
+
         function check_build_status(status_endpoint, sid) {
             var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + status_endpoint;
             $.ajax({
@@ -59,7 +176,7 @@
         }
 
         function a_onClick() {
-            // window.scrollTo(0, document.body.scrollHeight);
+            window.scrollTo(0, document.body.scrollHeight);
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -153,170 +270,39 @@
     <div class="input-group mb-3 needs-validation">
         <input id="txt_sname" type="text" class="form-control" placeholder="Strategy's name"
             aria-label="Strategy's name" aria-describedby="button-addon2" required>
-        <button id="btn_create_strategy" class="btn btn-outline-secondary" type="submit">Create</button>
-        <script>
-            $('#txt_sname').val(randomEl(adjectives) + '_' + randomEl(nouns));
-            function isEmpty(str) {
-                return (!str || str.length === 0);
-            }
-
-            $("#btn_create_strategy").click(function () {
-                var sname = $('#txt_sname').val();
-                if (isEmpty(sname)) {
-                    $('#myTextarea').text("invalid input, cannot be empty");
-                    return;
-                }
-
-                var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies";
-                var dataJSON = {};
-                dataJSON["name"] = encodeURIComponent(sname);
-
-                $.ajax({
-                    url: action_api,
-                    data: JSON.stringify(dataJSON),
-                    type: "POST",
-                    dataType: "json",
-                    contentType: "application/json;charset=utf-8",
-                    success: function (returnData) {
-                        $('#txt_sname').val("");
-                        location.reload();
-                    }
-                }).fail(function (data) {
-                    $('#myTextarea').text(data.responseText);
-                });
-            });
-        </script>
+        <button id="btn_create_strategy" class="btn btn-outline-secondary" type="submit"
+            onclick="create_onClick()">Create</button>
     </div>
 
     {% for strategy in strategies %}
     <ul class="nav nav-fill">
         <li class="nav-item">
             <div class="btn-group me-2 btn-group-sm" role="group" aria-label="First group">
-                <button id="btn_delete_{{ strategy['sid'] }}" type="button" class="btn btn-danger">
-                    Delete
-                    <script>
-                        $("#btn_delete_{{ strategy['sid'] }}").click(function () {
-                            var sid = "{{ strategy['sid'] }}"
-                            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategies/" + sid;
-
-                            $.ajax({
-                                url: action_api,
-                                type: "DELETE",
-                                success: function (returnData) {
-                                    location.reload();
-                                },
-                                error: function (xhr, ajaxOptions, thrownError) {
-                                    $('#myTextarea').text(xhr.status + "\n" + thrownError);
-                                }
-                            });
-                        });
-                    </script>
-                </button>
-                <input id="txt_sname_{{ strategy['sid'] }}" type="text" placeholder="{{ strategy['name'] }}" value="{{ strategy['name'] }}">
-                <button id="btn_update_{{ strategy['sid'] }}" type="button" class="btn btn-primary">
-                    Update
-                    <script>
-                        $("#btn_update_{{ strategy['sid'] }}").click(function () {
-                            var sid = "{{ strategy['sid'] }}"
-                            sname = $("#txt_sname_{{ strategy['sid'] }}").val();
-
-                            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid;
-                            var dataJSON = {};
-                            dataJSON["name"] = encodeURIComponent(sname);
-
-                            $.ajax({
-                                url: action_api,
-                                data: JSON.stringify(dataJSON),
-                                type: "PUT",
-                                dataType: "json",
-                                contentType: "application/json;charset=utf-8",
-                                success: function (returnData) {
-                                    location.reload();
-                                },
-                                error: function (xhr, ajaxOptions, thrownError) {
-                                    $('#myTextarea').text(xhr.status + "\n" + thrownError);
-                                }
-                            });
-                        });
-                    </script>
-                </button>
+                <button id="btn_delete_{{ strategy['sid'] }}" type="button" class="btn btn-danger"
+                    onclick="delete_onClick(this.id)">Delete</button>
+                <input id="txt_sname_{{ strategy['sid'] }}" type="text" value="{{ strategy['name'] }}">
+                <button id="btn_update_{{ strategy['sid'] }}" type="button" class="btn btn-primary"
+                    onclick="update_onClick(this.id)">Update</button>
             </div>
         </li>
         <li class="nav-item">
             <div class="btn-group me-2" role="group" aria-label="Second group">
                 <label class="switch">
                     {% if strategy['theia'] == "not running" %}
-                    <input id="{{ strategy['sid'] }}" type="checkbox">
+                    <input id="{{ strategy['sid'] }}" type="checkbox" onclick="ide_onClick(this.id, this.checked)">
                     {% else %}
-                    <input id="{{ strategy['sid'] }}" type="checkbox" checked>
+                    <input id="{{ strategy['sid'] }}" type="checkbox" onclick="ide_onClick(this.id, this.checked)"
+                        checked>
                     {% endif %}
                     <span class="slider round"></span>
-                    <script>
-                        $("#{{ strategy['sid'] }}").change(function (e) {
-                            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + event.target.id + "/" + ((this.checked) ? "start" : "stop");
-                            this.disabled = true
-                            $.ajax({
-                                type: 'PUT',
-                                url: action_api,
-                                success: function (data, status, xhr) {
-                                    ret_code = xhr.status;
-                                    var $box = $("#{{ strategy['sid'] }}")
-                                    if (ret_code != 200) {
-                                        $box[0].checked = false
-                                    }
-                                    $box[0].disabled = false
-
-                                    var textedJson = JSON.stringify(data, undefined, 4).replace(/\\"/g, '"');
-                                    $('#myTextarea').text(textedJson);
-                                }
-                            }).done(function (xhr, status, msg) {
-                            }).fail(function (data) {
-                                var $box = $("#{{ strategy['sid'] }}")
-                                $box[0].checked = false
-                                $box[0].disabled = false
-                                if (data.responseJSON)
-                                {
-                                    var textedJson = "";
-                                    for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
-                                    $('#myTextarea').text(data.responseText + textedJson);
-                                    return;
-                                }
-                                if (data.responseText) $('#myTextarea').text();
-                            }).always(function (data, status, xhr) {
-                            });
-                        });
-                    </script>
                 </label>
                 <div class="input-group-text" id="btnGroupAddon">Start / Stop IDE</div>
-                <a class="btn btn-link" href="{{ strategy['url'] }}" target="iframe_a" onClick="a_onClick()">Open
-                    IDE</a>
+                <a class="btn btn-link" href="{{ strategy['url'] }}" target="iframe_a" onClick="a_onClick()">
+                    Open IDE
+                </a>
                 <button type="button" class="btn btn-outline-primary loading buttonload"
-                    id="btn_build_{{ strategy['sid'] }}"
+                    id="btn_docker_{{ strategy['sid'] }}" onclick="docker_onClick(this.id)"
                     data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Building ...........">
-                    <script>
-                        $("#btn_build_{{ strategy['sid'] }}").unbind().click(function () {
-                            var $btn = $(this);
-                            $btn.button('loading');
-
-                            var sid = "{{ strategy['sid'] }}";
-                            //var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + username + "/" + sid;
-                            var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid + "/build"
-
-                            $.ajax({
-                                type: 'GET',
-                                crossDomain: true,
-                                url: action_api,
-                            }).done(function (data, status, xhr) {
-                                if (xhr.status == "202") {
-                                    status_endpoint = data;
-                                    check_build_status(status_endpoint, sid);
-                                }
-                            }).done(function (data, status, xhr) {
-                            }).fail(function (msg) {
-                            }).always(function (msg) {
-                            });
-                        });
-                    </script>
                     Pack Docker Image
                 </button>
             </div>
@@ -332,6 +318,7 @@
     $(document).ready(function () {
         $('#myTextarea').text(strategies);
         $('#iframe_a').attr('src', "");
+        $('#txt_sname').val(randomEl(adjectives) + '_' + randomEl(nouns));
     });
 </script>
 
