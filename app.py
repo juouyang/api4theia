@@ -576,5 +576,7 @@ if __name__ == '__main__':
     thread = threading.Thread(target=sync_containers_status)
     thread.start()
 
+    print(app.config['CRT_FILE'])
+    print(app.config['KEY_FILE'])
     context = (app.config['CRT_FILE'], app.config['KEY_FILE'])
-    app.run(host='0.0.0.0', port='5000', debug=app.config['DEBUG'], ssl_context=context)
+    app.run(host='0.0.0.0', port='443', debug=app.config['DEBUG'], ssl_context=context)

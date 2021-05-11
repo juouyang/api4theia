@@ -1,13 +1,13 @@
 TESTING = False
 DEBUG = False
-CRT_FILE = 'ssl/dev.net.crt'
-KEY_FILE = 'ssl/dev.net.key'
+CRT_FILE = 'ssl/doquant.com.crt'
+KEY_FILE = 'ssl/doquant.com.key'
 LOG_LEVEL = 40 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
-THEIA_ROOT = "/media/nfs/theia"
+THEIA_ROOT = "/media/aicots/ssd/theia"
 THEIA_PORT = 30000
-STRATEGY_TEMPLATE = "/root/builds/Doquant/Strategy"
+STRATEGY_TEMPLATE = "/home/aicots/builds/Doquant/Strategy"
 DOCKER_IMAGE = "theia-python:aicots"
-DOCKER_HOST = "pve.dev.net"
+DOCKER_HOST = "theia.doquant.com"
 PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 RUNNING_THEIA_PER_USER = 3
 MAX_STRATEGY_NUM = 100
