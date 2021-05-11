@@ -39,7 +39,7 @@ with open('data/strategies.json') as f:
     strategies = json.load(f)
 
 
-def run_container(uid, sid, sname, port):
+def run_container(uid, sid, port):
     if (len(client.images.list(name=app.config['DOCKER_IMAGE'])) == 0):
         return "docker.errors.ImageNotFound"
 
@@ -49,7 +49,7 @@ def run_container(uid, sid, sname, port):
         os.makedirs(src_path, exist_ok=True)
         if os.path.isdir(src_template):
             sp.call("cp -rf " + src_template + "/* " + src_path, shell=True)
-            sp.call("mv -f " + src_path + '/Your_Strategy.py \"' + src_path + '/' + sname + '.py\"', shell=True)
+            sp.call("mv -f " + src_path + '/Your_Strategy.py \"' + src_path + '/' + sid + '.py\"', shell=True)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])
         os.makedirs(src_path + '/.sandbox', exist_ok=True)
@@ -141,15 +141,12 @@ def not_found(error):
 
 
 @app.route('/api/v1.0/users', methods=['GET'])
-@auto.doc()
+# @auto.doc()
 @auth.login_required(role='Admin')
 def get_all_users():
     """Get all users by admin, return 200 or 401
 
     $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/users
-    200
-    $ curl -u user1:85114481 -k https://127.0.0.1:5000/api/v1.0/users
-    401
 
     """
     return jsonify({'users': users})
@@ -164,13 +161,6 @@ def get_strategies():
     """Get all strategies of one user, return 200 or 401
 
     $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategies
-    200
-    $ curl -u user1:85114481 -k https://127.0.0.1:5000/api/v1.0/strategies
-    200
-    $ curl -u foo:bar -k https://127.0.0.1:5000/api/v1.0/strategies
-    401
-    $ curl -k https://127.0.0.1:5000/api/v1.0/strategies
-    401
 
     """
     username = auth.current_user()
@@ -188,10 +178,7 @@ def get_strategies():
 def get_strategy(sid):
     """Get one strategy, return 200, 401 or 404
 
-    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV
-    200
-    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
-    404
+    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}
 
     """
     username = auth.current_user()
@@ -210,12 +197,7 @@ def get_strategy(sid):
 def get_strategy_field(sid, key):
     """Get one field of one strategy, return 200, 401 or 404
 
-    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/url
-    200
-    $ curl --u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/name
-    200
-    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/foobar
-    404
+    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/${KEY}
 
     """
     username = auth.current_user()
@@ -234,14 +216,7 @@ def get_strategy_field(sid, key):
 def create_strategy():
     """Create a new strategy, return 201, 400, 401 or 429
 
-    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' -k https://127.0.0.1:5000/api/v1.0/strategies | jq -r '.strategy.sid')
-    201
-    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_d"}' -k https://127.0.0.1:5000/api/v1.0/strategies
-    429
-    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X POST -d '{"foo":"bar"}' -k https://127.0.0.1:5000/api/v1.0/strategies
-    400
-    $ curl -u foo:bar -i -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_c"}' -k https://127.0.0.1:5000/api/v1.0/strategies
-    401
+    $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d '{"name":"my_strategy_name"}' -k https://127.0.0.1:5000/api/v1.0/strategies | jq -r '.strategy.sid')
 
     """
     if not request.json or not 'name' in request.json:
@@ -285,11 +260,6 @@ def delete_strategy(sid):
     """Delete one strategy, return 200, 401 or 404
 
     $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${NEW_SID}
-    200
-    $ curl -u foo:bar -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${NEW_SID}
-    401
-    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/foobar
-    404
 
     """
     username = auth.current_user()
@@ -317,12 +287,8 @@ def delete_strategy(sid):
 def update_strategy(sid):
     """Change fields of one strategy, return 200, 401 or 404
 
-    $ curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
-    200
-    $ curl -u foo:bar -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/9JYN5ycAEfoVNTkFxFQQxW
-    401
-    $ curl -u user1:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/foobar
-    404
+    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}
+
     """
     username = auth.current_user()
     user = list(filter(lambda t: str(t['username']) == str(username), users))
@@ -350,12 +316,7 @@ def update_strategy(sid):
 def start_ide(sid):
     """Star IDE for one strategy, return 200, 401, 404, 429 or 500
 
-    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
-    200
-    $ curl -u foo:bar -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/start
-    401
-    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/foobar/start
-    404
+    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/start
 
     """
     username = auth.current_user()
@@ -380,7 +341,7 @@ def start_ide(sid):
         abort(make_response(jsonify(
             error="the service has reached its maximum number of container for user = "+username), 429))
 
-    rc = run_container(uid, s['sid'], s['name'], s['port'])
+    rc = run_container(uid, s['sid'], s['port'])
     if (rc == ""):
         s['theia'] = "running"
         return jsonify(s)
@@ -395,12 +356,7 @@ def start_ide(sid):
 def stop_ide(sid):
     """Stop IDE for one strategy, return 200, 401 or 404
 
-    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
-    200
-    $ curl -u foo:bar -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/stop
-    401
-    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/foobar/stop
-    404
+    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/stop
 
     """
     username = auth.current_user()
