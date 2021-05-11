@@ -12,7 +12,6 @@ THEIA_ROOT = "/media/aicots/ssd/theia"
 
 THEIA_PORT = 30000
 DOCKER_IMAGE = "theia-python:aicots"
->>>>>>> master
 PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 RUNNING_THEIA_PER_USER = 3
 MAX_STRATEGY_NUM = 100
