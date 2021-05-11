@@ -1,6 +1,7 @@
+API_PORT = 5000
 TESTING = False
 DEBUG = False
-LOG_LEVEL = 40 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
+LOG_LEVEL = 0 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
 
 # change the following settings before run
 DOCKER_HOST = "pve.dev.net"
@@ -14,7 +15,7 @@ THEIA_PORT = 30000
 DOCKER_IMAGE = "theia-python:aicots"
 PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 RUNNING_THEIA_PER_USER = 3
-MAX_STRATEGY_NUM = 100
+MAX_STRATEGY_NUM = 6
 GIT_IGNORE = '''
 /.pytest_cache/
 __pycache__/

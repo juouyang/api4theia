@@ -20,10 +20,9 @@ import logging
 import subprocess as sp
 import threading
 import time
-import re
 
 app = Flask(__name__)
-app.config.from_pyfile('default_settings.py')
+app.config.from_pyfile('config/default_settings.py')
 
 logging.getLogger('werkzeug').setLevel(app.config['LOG_LEVEL'])
 
@@ -577,4 +576,4 @@ if __name__ == '__main__':
     thread.start()
 
     context = (app.config['CRT_FILE'], app.config['KEY_FILE'])
-    app.run(host='0.0.0.0', port='5000', debug=app.config['DEBUG'], ssl_context=context)
+    app.run(host='0.0.0.0', port=app.config['API_PORT'], debug=app.config['DEBUG'], ssl_context=context)
