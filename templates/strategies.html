@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="static/css/textarea.css">
     <link rel="stylesheet" href="static/css/slider.css">
     <link rel="stylesheet" href="static/css/buttonload.css">
+    <link rel="stylesheet" href="static/css/disablelink.css">
     <link href="static/favicon.ico" rel="icon" type="image/x-icon" />
     <script>
         const endpoint = "{{ url_for(request.endpoint) }}"
@@ -118,11 +119,11 @@
             });
         }
 
-        function docker_onClick(clicked_id) {
-            var sid = clicked_id.substring(11);
+        function pack_onClick(clicked_id) {
+            var sid = clicked_id.substring("btn_pack_".length);
             var action_api = url.protocol + "//" + username + ":" + password + "@" + url.host + "/api/v1.0/strategy/" + sid + "/build"
 
-            $("#btn_docker_" + sid).button('loading');
+            $("#" + clicked_id).button('loading');
 
             $.ajax({
                 type: 'GET',
@@ -131,7 +132,7 @@
             }).done(function (data, status, xhr) {
                 if (xhr.status == "202") {
                     status_endpoint = data;
-                    check_build_status(status_endpoint, sid);
+                    check_pack_status(status_endpoint, sid);
                 }
             }).fail(function (data) {
                 $('#myTextarea').text("Error occurred, check web console for more information");
@@ -139,7 +140,7 @@
             });
         }
 
-        function check_build_status(status_endpoint, sid) {
+        function check_pack_status(status_endpoint, sid) {
             var action_api = "https:" + "//" + url.hostname + ":5000" + "/" + status_endpoint;
             $.ajax({
                 type: 'GET',
@@ -149,7 +150,7 @@
                     ret_code = xhr.status;
                     if (ret_code == "202") {
                         setTimeout(function () {
-                            check_build_status(status_endpoint, sid);
+                            check_pack_status(status_endpoint, sid);
                         }, 1000);
                     } else {
                         var $btn = $("#btn_build_" + sid);
@@ -211,13 +212,12 @@
                     {% endif %}
                     <span class="slider round"></span>
                 </label>
-                <div class="input-group-text" id="btnGroupAddon">Start / Stop IDE</div>
-                <a class="btn btn-link" href="{{ strategy['url'] }}" target="iframe_a" onClick="a_onClick()">
+                <a class="btn btn-link disabled" id="link_theia_{{ strategy['sid'] }}" href="{{ strategy['url'] }}" target="iframe_a" onClick="a_onClick()">
                     Open IDE
                 </a>
                 <button type="button" class="btn btn-outline-primary loading buttonload"
-                    id="btn_docker_{{ strategy['sid'] }}" onclick="docker_onClick(this.id)"
-                    data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Building ...........">
+                    id="btn_pack_{{ strategy['sid'] }}" onclick="pack_onClick(this.id)"
+                    data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Packing ............">
                     Pack Docker Image
                 </button>
             </div>
