@@ -114,7 +114,7 @@ auth = HTTPBasicAuth()
 
 @auth.get_password
 def get_password(username):
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    user = [u for u in users if u['username'] == username]
     if len(user) == 0:
         return None
     return user[0]['password']
@@ -122,7 +122,7 @@ def get_password(username):
 
 @auth.get_user_roles
 def get_basic_role(username):
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    user = [u for u in users if u['username'] == username]
     if user[0]['is_admin']:
         return ['Admin']
 
@@ -164,11 +164,9 @@ def get_strategies():
 
     """
     username = auth.current_user()
-    user_list = list(filter(lambda t: str(
-        t['username']) == str(username), users))
-    sid_list = user_list[0]['strategies']
-    strategy_list = list(
-        filter(lambda t: str(t['sid']) in sid_list, strategies))
+    user = [u for u in users if u['username'] == username]
+    sid_list = user[0]['strategies']
+    strategy_list = [s for s in strategies if str(s['sid']) in sid_list]
     return jsonify({'strategies': strategy_list})
 
 
@@ -182,11 +180,9 @@ def get_strategy(sid):
 
     """
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
-    sid_list = user[0]['strategies']
-    strategy_list = list(filter(lambda t: str(
-        t['sid']) == sid and str(t['sid']) in sid_list, strategies))
-    if len(strategy_list) > 0:
+    user = [u for u in users if u['username'] == username]
+    strategy_list = [s for s in strategies if s['sid'] == sid]
+    if len(strategy_list) == 1 and sid in user[0]['strategies']:
         return jsonify({"strategy": strategy_list[0]})
     abort(404)
 
@@ -201,11 +197,9 @@ def get_strategy_field(sid, key):
 
     """
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
-    sid_list = user[0]['strategies']
-    strategy_list = list(filter(lambda t: str(
-        t['sid']) == sid and str(t['sid']) in sid_list, strategies))
-    if len(strategy_list) > 0 and key in strategy_list[0].keys():
+    user = [u for u in users if u['username'] == username]
+    strategy_list = [s for s in strategies if s['sid'] == sid]
+    if len(strategy_list) == 1 and sid in user[0]['strategies'] and key in strategy_list[0].keys():
         return jsonify({key: strategy_list[0][key]})
     abort(404)
 
@@ -231,7 +225,7 @@ def create_strategy():
     sid = shortuuid.uuid()
 
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    user = [u for u in users if u['username'] == username]
     if len(user[0]['strategies']) >= app.config['MAX_STRATEGY_NUM']:
         abort(make_response(jsonify(
             error="the service has reached its maximum number of strategy for user = "+username), 429))
@@ -263,7 +257,7 @@ def delete_strategy(sid):
 
     """
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    user = [u for u in users if u['username'] == username]
     if not len(user) == 1 or not sid in user[0]['strategies']:
         abort(404)
     u = user[0]
@@ -291,22 +285,20 @@ def update_strategy(sid):
 
     """
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
-    if (not sid in user[0]['strategies']) and (user[0]['is_admin'] != True):
+    user = [u for u in users if u['username'] == username]
+    if (not sid in user[0]['strategies']):
         abort(404)
 
-    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
-    if len(strategy) == 0:
+    strategy_list = [s for s in strategies if s['sid'] == sid]
+    if len(strategy_list) == 0:
         abort(404)
-    if not request.json:
+    if not request.json and 'name' in request.json and type(request.json['name']) != str:
         abort(400)
-    if 'name' in request.json and type(request.json['name']) != str:
-        abort(400)
+    strategy = strategy_list[0]
     new_name = request.json.get('name', strategy[0]['name'])
     strategy[0]['name'] = unquote(new_name)
     with open('data/strategies.json', 'w') as f:
         json.dump(strategies, f)
-    # change filename of strategy
     return jsonify({'strategy': strategy[0]})
 
 
@@ -320,18 +312,16 @@ def start_ide(sid):
 
     """
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    user = [u for u in users if u['username'] == username]
     if not sid in user[0]['strategies']:
         abort(404)
 
-    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
-    if len(strategy) == 0:
+    strategy_list = [s for s in strategies if s['sid'] == sid]
+    if len(strategy_list) == 0:
         abort(404)
-    s = strategy[0]
+    s = strategy_list[0]
 
-    user = list(filter(lambda t: str(sid) in str(t['strategies']), users))
-    if len(strategy) == 0:
-        abort(404)
+    user = [u for u in users if sid in u['strategies']]
     u = user[0]
 
     ## check running container, return 429 if more than limit
@@ -360,15 +350,15 @@ def stop_ide(sid):
 
     """
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    user = [u for u in users if u['username'] == username]
     if not sid in user[0]['strategies']:
         abort(404)
 
-    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
-    if len(strategy) == 0:
+    strategy_list = [s for s in strategies if s['sid'] == sid]
+    if len(strategy_list) == 0:
         abort(404)
 
-    s = strategy[0]
+    s = strategy_list[0]
     remove_container(s['sid'])
     s['theia'] = "not running"
     return jsonify(s)
@@ -436,7 +426,7 @@ class GetTaskStatus(Resource):
         return task['return_value']
 
 
-class BuildDocker(Resource):
+class PackImage(Resource):
     @auth.login_required()
     @async_api
     def get(self, sid=''):
@@ -445,8 +435,10 @@ class BuildDocker(Resource):
 
         # user ID
         username = request.authorization['username']
-        # strategy ID = sid
-        path = username + "/" + sid + "/src"
+        uids = [u['uid'] for u in users if u['username'] == username and sid in u['strategies']]
+        if not len(uids) == 1:
+            abort(404)
+        path = uids[0] + "/" + sid + "/src"
 
         child = sp.Popen("cd /media/nfs/theia/" + path + "; " + app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)
         #child = sp.Popen("cd /media/nfs/theia/" + path + "; bash build.sh", shell=True, stdout=sp.PIPE)
@@ -464,8 +456,8 @@ class BuildDocker(Resource):
         return json, 200 if rc == 0 else rc
 
 
-# curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/build
-api.add_resource(BuildDocker, '/api/v1.0/strategy/<sid>/build')
+# curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/YJMDUH9zuwXf8c6KT2CDEV/pack
+api.add_resource(PackImage, '/api/v1.0/strategy/<sid>/pack')
 # curl -u admin:85114481 -k https://127.0.0.1:5000/status/YJMDUH9zuwXf8c6KT2CDEV
 api.add_resource(GetTaskStatus, '/status/<task_id>')
 
@@ -501,15 +493,13 @@ def before_first_request():
 @auth.login_required(role='Admin')
 def get_all_users_html():
     return render_template('users.html', users=users)
-    # username_list = [temp_dict['username'] for temp_dict in users]
-    # return render_template('users.html', users=username_list)
 
 
 @app.route('/', methods=['GET'])
 @auth.login_required()
 def get_strategies_html():
     username = auth.current_user()
-    user = list(filter(lambda t: str(t['username']) == str(username), users))
+    user = [u for u in users if u['username'] == username]
     sid_list = user[0]['strategies']
     strategy_list = list(
         filter(lambda t: str(t['sid']) in sid_list, strategies))
@@ -528,8 +518,8 @@ if __name__ == '__main__':
             strategy['theia'] = "not running"
             if len(client.containers.list(all=True, filters={'name': strategy['sid']})) == 1:
                 strategy['theia'] = "running"
-    thread = threading.Thread(target=sync_containers_status)
-    thread.start()
-
+    # thread = threading.Thread(target=sync_containers_status)
+    # thread.start()
+    sync_containers_status()
     context = (app.config['CRT_FILE'], app.config['KEY_FILE'])
     app.run(host='0.0.0.0', port=app.config['API_PORT'], debug=app.config['DEBUG'], ssl_context=context)
