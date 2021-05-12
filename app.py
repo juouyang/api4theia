@@ -505,7 +505,7 @@ def get_all_users_html():
     # return render_template('users.html', users=username_list)
 
 
-@app.route('/strategies', methods=['GET'])
+@app.route('/', methods=['GET'])
 @auth.login_required()
 def get_strategies_html():
     username = auth.current_user()

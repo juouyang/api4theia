@@ -4,12 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <title></title>
-    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
-    <script src="https:////ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    <script src="static/jquery-3.5.1.min.js"></script>
+    <script src="static/bootstrap-4.6.0.min.js"></script>
+    <link rel="stylesheet" href="static/css/font-awesome.min.css">
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/textarea.css">
+    <link rel="stylesheet" href="static/css/slider.css">
+    <link rel="stylesheet" href="static/css/buttonload.css">
+    <link href="static/favicon.ico" rel="icon" type="image/x-icon" />
     <script>
         const endpoint = "{{ url_for(request.endpoint) }}"
-        const url = new URL("{{ request.url }}");
+        const url = new URL("{{ request.url }}")
+        const strategies = '{{ strategies | tojson | safe }}'
+        const username = "{{ g.user['username'] }}"
+        const password = "{{ g.user['password'] }}"
 
         var adjectives = ["adamant", "adroit", "amatory", "animistic", "antic", "arcadian", "baleful", "bellicose", "bilious", "boorish", "calamitous", "caustic", "cerulean", "comely", "concomitant", "contumacious", "corpulent", "crapulous", "defamatory", "didactic", "dilatory", "dowdy", "efficacious", "effulgent", "egregious", "endemic", "equanimous", "execrable", "fastidious", "feckless", "fecund", "friable", "fulsome", "garrulous", "guileless", "gustatory", "heuristic", "histrionic", "hubristic", "incendiary", "insidious", "insolent", "intransigent", "inveterate", "invidious", "irksome", "jejune", "jocular", "judicious", "lachrymose", "limpid", "loquacious", "luminous", "mannered", "mendacious", "meretricious", "minatory", "mordant", "munificent", "nefarious", "noxious", "obtuse", "parsimonious", "pendulous", "pernicious", "pervasive", "petulant", "platitudinous", "precipitate", "propitious", "puckish", "querulous", "quiescent", "rebarbative", "recalcitant", "redolent", "rhadamanthine", "risible", "ruminative", "sagacious", "salubrious", "sartorial", "sclerotic", "serpentine", "spasmodic", "strident", "taciturn", "tenacious", "tremulous", "trenchant", "turbulent", "turgid", "ubiquitous", "uxorious", "verdant", "voluble", "voracious", "wheedling", "withering", "zealous"];
         var nouns = ["ninja", "chair", "pancake", "statue", "unicorn", "rainbows", "laser", "senor", "bunny", "captain", "nibblets", "cupcake", "carrot", "gnomes", "glitter", "potato", "salad", "toejam", "curtains", "beets", "toilet", "exorcism", "dragons", "jellybeans", "snakes", "dolls", "bushes", "cookies", "apples", "ukulele", "kazoo", "banjo", "circus", "trampoline", "carousel", "carnival", "locomotive", "animator", "artisan", "artist", "colorist", "inker", "coppersmith", "director", "designer", "flatter", "stylist", "leadman", "limner", "model", "musician", "penciller", "producer", "scenographer", "silversmith", "teacher", "beader", "foreman", "mechanic", "miller", "moldmaker", "patternmaker", "plumber", "sawfiler", "soaper", "wheelwright", "woodworkers"];
@@ -17,10 +25,6 @@
             var i = Math.floor(Math.random() * list.length);
             return list[i];
         }
-
-        const strategies = '{{ strategies | tojson | safe }}'
-        const username = "{{ g.user['username'] }}"
-        const password = "{{ g.user['password'] }}"
 
         function create_onClick() {
             var sname = $('#txt_sname').val();
@@ -40,7 +44,8 @@
                     location.reload();
                 }
             }).fail(function (data) {
-                $('#myTextarea').text(data.responseText);
+                $('#myTextarea').text("Error occurred, check web console for more information");
+                console.log(data)
             });
         }
 
@@ -53,10 +58,10 @@
                 type: "DELETE",
                 success: function (returnData) {
                     location.reload();
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
-                    $('#myTextarea').text(xhr.status + "\n" + thrownError);
                 }
+            }).fail(function (data) {
+                $('#myTextarea').text("Error occurred, check web console for more information");
+                console.log(data)
             });
         }
 
@@ -76,10 +81,10 @@
                 contentType: "application/json;charset=utf-8",
                 success: function (returnData) {
                     location.reload();
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
-                    $('#myTextarea').text(xhr.status + "\n" + thrownError);
                 }
+            }).fail(function (data) {
+                $('#myTextarea').text("Error occurred, check web console for more information");
+                console.log(data)
             });
         }
 
@@ -103,18 +108,13 @@
                     var textedJson = JSON.stringify(data, undefined, 4).replace(/\\"/g, '"');
                     $('#myTextarea').text(textedJson);
                 }
-            }).done(function (xhr, status, msg) {
             }).fail(function (data) {
                 var $box = $("#" + sid)
                 $box[0].checked = false
                 $box[0].disabled = false
-                if (data.responseJSON) {
-                    var textedJson = "";
-                    for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
-                    $('#myTextarea').text(data.responseText + textedJson);
-                }
-                else if (data.responseText) $('#myTextarea').text(data.responseText);
-            }).always(function (data, status, xhr) {
+
+                $('#myTextarea').text("Error occurred, check web console for more information");
+                console.log(data)
             });
         }
 
@@ -133,9 +133,9 @@
                     status_endpoint = data;
                     check_build_status(status_endpoint, sid);
                 }
-            }).done(function (data, status, xhr) {
-            }).fail(function (msg) {
-            }).always(function (msg) {
+            }).fail(function (data) {
+                $('#myTextarea').text("Error occurred, check web console for more information");
+                console.log(data)
             });
         }
 
@@ -162,17 +162,14 @@
                         $('#myTextarea').text(textedJson);
                     }
                 }
-            }).done(function (data, status, xhr) {
             }).fail(function (data) {
                 var $btn = $("#btn_build_" + sid);
                 $btn.button('reset');
                 $btn.removeClass('btn-outline-primary');
                 $btn.addClass('btn-warning');
 
-                var textedJson = "";
-                for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
-                $('#myTextarea').text(textedJson);
-            }).always(function (msg) {
+                $('#myTextarea').text("Error occurred, check web console for more information");
+                console.log(data)
             });
         }
 
@@ -180,89 +177,6 @@
             // window.scrollTo(0, document.body.scrollHeight);
         }
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-    <style>
-        body {
-            padding: 3rem;
-            font-size: 16px;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 6rem;
-            font-family: "Lucida Console", Monaco, monospace;
-            font-size: 0.8rem;
-            line-height: 1.2;
-        }
-
-        /* The switch - the box around the slider */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-
-        /* Hide default HTML checkbox */
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        /* The slider */
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            -webkit-transition: .4s;
-            transition: .4s;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            -webkit-transition: .4s;
-            transition: .4s;
-        }
-
-        input:checked+.slider {
-            background-color: #2196F3;
-        }
-
-        input:focus+.slider {
-            box-shadow: 0 0 1px #2196F3;
-        }
-
-        input:checked+.slider:before {
-            -webkit-transform: translateX(26px);
-            -ms-transform: translateX(26px);
-            transform: translateX(26px);
-        }
-
-        /* Rounded sliders */
-        .slider.round {
-            border-radius: 34px;
-        }
-
-        .slider.round:before {
-            border-radius: 50%;
-        }
-
-        .buttonload .fa-spin {
-            margin-right: 10px;
-        }
-    </style>
 </head>
 
 <body>
