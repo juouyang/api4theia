@@ -60,13 +60,6 @@ def test_get_strategy_field_by_sid_and_key():
     assert resp_body['name'] == "my_strategy_a"
 
     response = requests.get(
-        "https://admin:85114481@127.0.0.1:" + str(API_PORT) + "/api/v1.0/strategy/" + created_sid + "/url", verify=False)
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.status_code == 200
-    resp_body = response.json()
-    assert resp_body['url'] == "https://" + DOCKER_HOST + ":30000"
-
-    response = requests.get(
         "https://admin:85114481@127.0.0.1:" + str(API_PORT) + "/api/v1.0/strategy/" + created_sid + "/foobar", verify=False)
     assert response.headers["Content-Type"] == "application/json"
     assert response.status_code == 404
