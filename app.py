@@ -69,6 +69,9 @@ def run_container(uid, sid, port):
 
     if len(client.containers.list(all=True, filters={'name': sid})) == 0:
         try:
+            user = [u for u in users if u['uid'] == uid]
+            if (len(user) != 1):
+                raise Exception("user not found")
             client.containers.run(
                 app.config['DOCKER_IMAGE'],
                 auto_remove=True,
@@ -80,7 +83,8 @@ def run_container(uid, sid, port):
                     theia_config_path + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
                 },
                 mem_limit="1g",
-                privileged=False
+                privileged=False,
+                environment={'USERNAME': user[0]['username'], 'PASSWORD': user[0]['password']}
             )
             return ""
         except :
