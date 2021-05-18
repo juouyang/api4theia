@@ -5,8 +5,8 @@ LOG_LEVEL = 0 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-l
 
 # change the following settings before run
 DOCKER_HOST = "pve.dev.net"
-CRT_FILE = 'ssl/dev.net.crt'
-KEY_FILE = 'ssl/dev.net.key'
+CRT_FILE = 'ssl/pve.dev.net.crt'
+KEY_FILE = 'ssl/pve.dev.net.key'
 STRATEGY_TEMPLATE = "/root/builds/Doquant/Strategy"
 THEIA_ROOT = "/media/nfs/theia"
 #
