@@ -11,3 +11,4 @@ Flask-CORS
 pytest==6.2.3
 pytest-stress==1.0.1
 selenium==3.141.0
+Flask-WTF==0.14.3

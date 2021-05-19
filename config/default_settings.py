@@ -1,6 +1,4 @@
 API_PORT = 5000
-TESTING = False
-DEBUG = False
 LOG_LEVEL = 0 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
 
 # change the following settings before run
@@ -10,6 +8,9 @@ KEY_FILE = 'ssl/pve.dev.net.key'
 STRATEGY_TEMPLATE = "/root/builds/Doquant/Strategy"
 THEIA_ROOT = "/media/nfs/theia"
 #
+
+# TESTING
+WTF_CSRF_ENABLED = True
 
 THEIA_PORT = 30000
 DOCKER_IMAGE = "theia-python:aicots"

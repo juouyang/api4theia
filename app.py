@@ -5,6 +5,7 @@ from flask_httpauth import HTTPBasicAuth
 from flask_selfdoc import Autodoc
 from flask_restful import Resource, Api
 from flask_cors import CORS
+from flask_wtf.csrf import CSRFProtect
 
 from werkzeug.exceptions import HTTPException, InternalServerError
 
@@ -23,9 +24,16 @@ import time
 
 app = Flask(__name__)
 app.config.from_pyfile('config/default_settings.py')
+# export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))')
+print(app.config['DEBUG'])
+SECRET_KEY = os.environ.get("SECRET_KEY") if not app.config['DEBUG'] else '1234567890'
+if not SECRET_KEY:
+    raise ValueError("No SECRET_KEY set for Flask application")
+app.config['SECRET_KEY'] = SECRET_KEY
 
 logging.getLogger('werkzeug').setLevel(app.config['LOG_LEVEL'])
 
+csrf = CSRFProtect(app)
 cors = CORS(app)
 auto = Autodoc(app)
 api = Api(app)
@@ -298,12 +306,12 @@ def update_strategy(sid):
         abort(404)
     if not request.json and 'name' in request.json and type(request.json['name']) != str:
         abort(400)
-    strategy = strategy_list[0]
-    new_name = request.json.get('name', strategy[0]['name'])
-    strategy[0]['name'] = unquote(new_name)
+    s = strategy_list[0]
+    new_name = request.json.get('name', s['name'])
+    s['name'] = unquote(new_name)
     with open('data/strategies.json', 'w') as f:
         json.dump(strategies, f)
-    return jsonify({'strategy': strategy[0]})
+    return jsonify({'strategy': s})
 
 
 @app.route('/api/v1.0/strategy/<sid>/start', methods=['PUT'])
