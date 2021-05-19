@@ -15,7 +15,8 @@ venv/bin/pip install -r requirements.txt
 
 ```
 source venv/bin/activate
-./app.py
+export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))')
+sudo --preserve-env=SECRET_KEY ./app.py
 ```
 
 ## Test
