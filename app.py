@@ -1,10 +1,10 @@
 #!venv/bin/python
 from flask import Flask, g, abort, current_app, request, url_for, jsonify, make_response, render_template
 
-from flask_httpauth import HTTPBasicAuth
-from flask_selfdoc import Autodoc
-from flask_restful import Resource, Api
 from flask_cors import CORS
+from flask_httpauth import HTTPBasicAuth
+from flask_restful import Resource, Api
+from flask_selfdoc import Autodoc
 from flask_wtf.csrf import CSRFProtect
 
 from werkzeug.exceptions import HTTPException, InternalServerError
@@ -498,6 +498,13 @@ def before_first_request():
         thread.start()
 
 
+def sync_containers_status():
+        for strategy in strategies:
+            strategy['theia'] = "not running"
+            if len(client.containers.list(all=True, filters={'name': strategy['sid']})) == 1:
+                strategy['theia'] = "running"
+
+
 # frontend
 
 
@@ -525,13 +532,6 @@ def documentation():
 
 
 if __name__ == '__main__':
-    def sync_containers_status():
-        for strategy in strategies:
-            strategy['theia'] = "not running"
-            if len(client.containers.list(all=True, filters={'name': strategy['sid']})) == 1:
-                strategy['theia'] = "running"
-    # thread = threading.Thread(target=sync_containers_status)
-    # thread.start()
     sync_containers_status()
     context = (app.config['CRT_FILE'], app.config['KEY_FILE'])
     app.run(host='0.0.0.0', port=app.config['API_PORT'], debug=app.config['DEBUG'], ssl_context=context)
