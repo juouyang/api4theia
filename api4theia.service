@@ -1,0 +1,11 @@
+[Unit]
+Description=api4theia
+After=multi-user.target
+
+[Service]
+WorkingDirectory=/home/aicots/builds/api4theia
+Type=simple
+ExecStart=/bin/sh -c "export SECRET_KEY=$(/home/aicots/builds/api4theia/venv/bin/python -c 'import secrets; print(secrets.token_urlsafe(16))'); /home/aicots/builds/api4theia/venv/bin/python /home/aicots/builds/api4theia/app.py"
+
+[Install]
+WantedBy=multi-user.target
