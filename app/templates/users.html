@@ -10,8 +10,8 @@
     const url = new URL("{{ request.url }}");
     const users = '{{ users | tojson | safe }}';
   </script>
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="static/css/textarea.css">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 
 <body>

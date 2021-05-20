@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="static/css/slider.css">
     <link rel="stylesheet" href="static/css/buttonload.css">
     <link rel="stylesheet" href="static/css/disablelink.css">
-    <link href="static/favicon.ico" rel="icon" type="image/x-icon" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <script>
         const endpoint = "{{ url_for(request.endpoint) }}"
         const url = new URL("{{ request.url }}")

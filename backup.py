@@ -38,10 +38,10 @@ api = Api(app)
 
 client = docker.from_env()
 
-with open('data/users.json') as f:
+with open('migrations/users.json') as f:
     users = json.load(f)
 
-with open('data/strategies.json') as f:
+with open('migrations/strategies.json') as f:
     strategies = json.load(f)
 
 
@@ -50,7 +50,7 @@ def run_container(uid, sid, port):
         return "docker.errors.ImageNotFound"
 
     src_template = app.config['STRATEGY_TEMPLATE']
-    src_path = app.config['THEIA_ROOT'] + '/' + uid + '/' + sid + '/src'
+    src_path = app.config['STORAGE_POOL'] + '/' + uid + '/' + sid + '/src'
     if not os.path.isdir(src_path):
         os.makedirs(src_path, exist_ok=True)
         if os.path.isdir(src_template):
@@ -69,7 +69,7 @@ def run_container(uid, sid, port):
             sp.call("cp -rf " + src_template + "/reference/ " + src_path, shell=True)
             sp.call("cp -rf " + src_template + "/__main__.py " + src_path, shell=True)
 
-    theia_config_path = app.config['THEIA_ROOT'] + '/' + uid + '/' + sid + '/theia_config'
+    theia_config_path = app.config['STORAGE_POOL'] + '/' + uid + '/' + sid + '/theia_config'
     if not os.path.isdir(theia_config_path):
         os.makedirs(theia_config_path, exist_ok=True)
 
@@ -111,7 +111,7 @@ def remove_container(sid):
 
 
 def cleanup_volume(uid, sid):
-    folderpath = app.config['THEIA_ROOT'] + '/' + uid + '/' + sid
+    folderpath = app.config['STORAGE_POOL'] + '/' + uid + '/' + sid
     remove_container(sid)
     sp.call("rm -rf " + folderpath, shell=True)
 
@@ -231,7 +231,7 @@ def create_strategy():
     #     abort(make_response(
     #         jsonify(error="the request should contain strategy ID"), 400))
 
-    port = strategies[-1]['port'] + 1 if len(strategies) > 0 else app.config['THEIA_PORT']
+    port = strategies[-1]['port'] + 1 if len(strategies) > 0 else app.config['API_PORT']
     sid = shortuuid.uuid()
 
     username = auth.current_user()
@@ -241,18 +241,18 @@ def create_strategy():
             error="the service has reached its maximum number of strategy for user = "+username), 429))
 
     user[0]['strategies'].append(sid)
-    with open('data/users.json', 'w') as f:
+    with open('migrations/users.json', 'w') as f:
         json.dump(users, f)
     strategy = {
         'sid': sid,
         'name': unquote(request.json['name']),
         'port': port,
-        'url': u'https://' + app.config['DOCKER_HOST'] + ':' + str(port),
+        'url': u'https://' + app.config['FQDN'] + ':' + str(port),
         'theia': "not running",
         'uid': user[0]['uid']
     }
     strategies.append(strategy)
-    with open('data/strategies.json', 'w') as f:
+    with open('migrations/strategies.json', 'w') as f:
         json.dump(strategies, f)
     return jsonify({'strategy': strategy}), 201
 
@@ -277,10 +277,10 @@ def delete_strategy(sid):
     if len(strategy) == 0:
         abort(404)
     strategies.remove(strategy[0])
-    with open('data/strategies.json', 'w') as f:
+    with open('migrations/strategies.json', 'w') as f:
         json.dump(strategies, f)
     u['strategies'].remove(sid)
-    with open('data/users.json', 'w') as f:
+    with open('migrations/users.json', 'w') as f:
         json.dump(users, f)
     return jsonify({'result': True})
 
@@ -307,7 +307,7 @@ def update_strategy(sid):
     s = strategy_list[0]
     new_name = request.json.get('name', s['name'])
     s['name'] = unquote(new_name)
-    with open('data/strategies.json', 'w') as f:
+    with open('migrations/strategies.json', 'w') as f:
         json.dump(strategies, f)
     return jsonify({'strategy': s})
 
