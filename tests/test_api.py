@@ -1,7 +1,6 @@
-import pytest
 import requests
 import json
-from config.default_settings import *
+from config import *
 
 def test_get_strategies_of_a_user():
     response = requests.get(

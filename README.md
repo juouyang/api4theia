@@ -19,11 +19,20 @@ export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))'
 sudo --preserve-env=SECRET_KEY ./app.py
 ```
 
-## Test
+## Test prepare
 
 ```
 source venv/bin/activate
+sed -i "/WTF_CSRF_ENABLED/c\WTF_CSRF_ENABLED = False" config.py
+export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))')
+sudo --preserve-env=SECRET_KEY ./app.py
+```
+
+## Test
+
+```
 python -m pytest
+sed -i "/WTF_CSRF_ENABLED/c\WTF_CSRF_ENABLED = True" config.py
 ```
 
 

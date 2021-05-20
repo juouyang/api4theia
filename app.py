@@ -23,9 +23,7 @@ import threading
 import time
 
 app = Flask(__name__)
-app.config.from_pyfile('config/default_settings.py')
-# export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))')
-print(app.config['DEBUG'])
+app.config.from_pyfile('config.py')
 SECRET_KEY = os.environ.get("SECRET_KEY") if not app.config['DEBUG'] else '1234567890'
 if not SECRET_KEY:
     raise ValueError("No SECRET_KEY set for Flask application")
