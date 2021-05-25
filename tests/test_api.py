@@ -58,6 +58,21 @@ class APITestCase(unittest.TestCase):
         resp_body = response.json
         assert len(resp_body['strategies']) == self.app.config['MAX_STRATEGY_NUM']
 
+        response = self.client.post("/api/v1.0/strategies",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json',
+                        data='{"name": "my_strategy_xx"}')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 429
+
+        response = self.client.get("/api/v1.0/strategies",
+                            headers={"Authorization": f"Basic {credentials}"},
+                            content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+        resp_body = response.json
+        assert len(resp_body['strategies']) == self.app.config['MAX_STRATEGY_NUM']
+
         for sid in new_strategy_list:
             response = self.client.delete("/api/v1.0/strategies/" + str(sid),
                             headers={"Authorization": f"Basic {credentials}"},
