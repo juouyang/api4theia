@@ -6,7 +6,6 @@ Flask-Selfdoc==1.2.3
 Flask-WTF==0.14.3
 shortuuid==1.0.1
 docker==5.0.0
-pip==21.1.1
 pyopenssl
 Rust
 pytest==6.2.3
