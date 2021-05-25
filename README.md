@@ -16,23 +16,13 @@ venv/bin/pip install -r requirements.txt
 ```
 source venv/bin/activate
 export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))')
-sudo --preserve-env=SECRET_KEY ./app.py
-```
-
-## Test prepare
-
-```
-source venv/bin/activate
-sed -i "/WTF_CSRF_ENABLED/c\WTF_CSRF_ENABLED = False" config.py
-export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))')
-sudo --preserve-env=SECRET_KEY ./app.py
+sudo --preserve-env=SECRET_KEY ./api4theia.py
 ```
 
 ## Test
 
 ```
 python -m pytest
-sed -i "/WTF_CSRF_ENABLED/c\WTF_CSRF_ENABLED = True" config.py
 ```
 
 
