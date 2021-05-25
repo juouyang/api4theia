@@ -24,6 +24,7 @@ class APITestCase(unittest.TestCase):
         resp_body = response.json
         assert len(resp_body['users']) == 12
 
+
     def test_non_admin(self):
         credentials = b64encode(b"juice:85114481").decode('utf-8')
         response = self.client.get("/api/v1.0/users",
@@ -31,6 +32,38 @@ class APITestCase(unittest.TestCase):
                         content_type='application/json')
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 401
+
+
+    def test_create_delete_strategies(self):
+        new_strategy_list = []
+
+        # create strategy until reach MAX_STRATEGY_NUM
+        credentials = b64encode(b"admin:85114481").decode('utf-8')
+        for i in range(self.app.config['MAX_STRATEGY_NUM']):
+            response = self.client.post("/api/v1.0/strategies",
+                            headers={"Authorization": f"Basic {credentials}"},
+                            content_type='application/json',
+                            data='{"name": "my_strategy_' + str(i) + '"}')
+            assert response.headers["Content-Type"] == "application/json"
+            assert response.status_code == 201
+            resp_body = response.json
+            created_sid = resp_body['strategy']['sid']
+            new_strategy_list.append(created_sid)
+
+        response = self.client.get("/api/v1.0/strategies",
+                            headers={"Authorization": f"Basic {credentials}"},
+                            content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+        resp_body = response.json
+        assert len(resp_body['strategies']) == self.app.config['MAX_STRATEGY_NUM']
+
+        for sid in new_strategy_list:
+            response = self.client.delete("/api/v1.0/strategies/" + str(sid),
+                            headers={"Authorization": f"Basic {credentials}"},
+                            content_type='application/json')
+            assert response.headers["Content-Type"] == "application/json"
+            assert response.status_code == 200
 
 
     def test_get_strategies_of_a_user(self):
@@ -54,3 +87,67 @@ class APITestCase(unittest.TestCase):
         assert response.status_code == 201
         resp_body = response.json
         created_sid = resp_body['strategy']['sid']
+
+        response = self.client.get("/api/v1.0/strategy/" + created_sid,
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+
+        another_user = b64encode(b"juice:85114481").decode('utf-8')
+        response = self.client.get("/api/v1.0/strategy/" + created_sid,
+                        headers={"Authorization": f"Basic {another_user}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 404
+
+        response = self.client.delete("/api/v1.0/strategies/" + str(created_sid),
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+
+
+    def test_get_strategy_field_by_sid_and_key(self):
+        credentials = b64encode(b"admin:85114481").decode('utf-8')
+        response = self.client.post("/api/v1.0/strategies",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json',
+                        data='{"name": "my_strategy_abc"}')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 201
+        resp_body = response.json
+        created_sid = resp_body['strategy']['sid']
+
+        response = self.client.get("/api/v1.0/strategy/" + created_sid + "/name",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+        resp_body = response.json
+        assert resp_body['name'] == "my_strategy_abc"
+
+        response = self.client.get("/api/v1.0/strategy/" + created_sid + "/foobar",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 404
+
+        another_user = b64encode(b"juice:85114481").decode('utf-8')
+        response = self.client.get("/api/v1.0/strategy/" + created_sid + "/url",
+                        headers={"Authorization": f"Basic {another_user}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 404
+
+        response = self.client.get("/api/v1.0/strategy/000000000/url",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 404
+
+        response = self.client.delete("/api/v1.0/strategies/" + str(created_sid),
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
