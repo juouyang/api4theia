@@ -2,7 +2,6 @@ from flask import jsonify, abort, make_response, current_app, request
 from . import main, auth
 from app.models import users, strategies, save_user, save_strategy
 import shortuuid
-import json
 from urllib.parse import unquote
 from ..docker import *
 
