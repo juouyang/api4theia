@@ -12,7 +12,7 @@ def get_password(username):
     return user[0]['password']
 
 @auth.get_user_roles
-def get_basic_role(username):
+def get_user_roles(username):
     user = [u for u in users if u['username'] == username]
     if user[0]['is_admin']:
         return ['Admin']
