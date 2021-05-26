@@ -9,7 +9,7 @@ from config import config
 
 csrf = CSRFProtect()
 cors = CORS()
-api = Api()
+rapi = Api()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -20,9 +20,12 @@ def create_app(config_name):
 
     csrf.init_app(app)
     cors.init_app(app)
-    api.init_app(app)
+    rapi.init_app(app)
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
+
+    from .api import api as api_blueprint
+    app.register_blueprint(api_blueprint, url_prefix='/api/v1.0')
 
     return app

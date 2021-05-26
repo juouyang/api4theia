@@ -1,12 +1,13 @@
 from flask import jsonify, abort, make_response, current_app, request
-from . import main, auth
+from . import api
+from ..auth import basic
 from app.models import users, strategies, save_user, save_strategy
 import shortuuid
 from urllib.parse import unquote
 from ..docker import *
 
-@main.route('/api/v1.0/users', methods=['GET'])
-@auth.login_required(role='Admin')
+@api.route('/users', methods=['GET'])
+@basic.auth.login_required(role='Admin')
 def get_all_users():
     """Get all users by admin, return 200 or 401
 
@@ -16,30 +17,30 @@ def get_all_users():
     return jsonify({'users': users})
 
 
-@main.route('/api/v1.0/strategies', methods=['GET'])
-@auth.login_required()
+@api.route('/strategies', methods=['GET'])
+@basic.auth.login_required()
 def get_strategies():
     """Get all strategies of one user, return 200 or 401
 
     $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategies
 
     """
-    username = auth.current_user()
+    username = basic.auth.current_user()
     user = [u for u in users if u['username'] == username]
     sid_list = user[0]['strategies']
     strategy_list = [s for s in strategies if str(s['sid']) in sid_list]
     return jsonify({'strategies': strategy_list})
 
 
-@main.route('/api/v1.0/strategy/<sid>', methods=['GET'])
-@auth.login_required()
+@api.route('/strategy/<sid>', methods=['GET'])
+@basic.auth.login_required()
 def get_strategy(sid):
     """Get one strategy, return 200, 401 or 404
 
     $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}
 
     """
-    username = auth.current_user()
+    username = basic.auth.current_user()
     user = [u for u in users if u['username'] == username]
     strategy_list = [s for s in strategies if s['sid'] == sid]
     if len(strategy_list) == 1 and sid in user[0]['strategies']:
@@ -47,15 +48,15 @@ def get_strategy(sid):
     abort(404)
 
 
-@main.route('/api/v1.0/strategy/<sid>/<key>', methods=['GET'])
-@auth.login_required()
+@api.route('/strategy/<sid>/<key>', methods=['GET'])
+@basic.auth.login_required()
 def get_strategy_field(sid, key):
     """Get one field of one strategy, return 200, 401 or 404
 
     $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/${KEY}
 
     """
-    username = auth.current_user()
+    username = basic.auth.current_user()
     user = [u for u in users if u['username'] == username]
     strategy_list = [s for s in strategies if s['sid'] == sid]
     if len(strategy_list) == 1 and sid in user[0]['strategies'] and key in strategy_list[0].keys():
@@ -63,8 +64,8 @@ def get_strategy_field(sid, key):
     abort(404)
 
 
-@main.route('/api/v1.0/strategies', methods=['POST'])
-@auth.login_required()
+@api.route('/strategies', methods=['POST'])
+@basic.auth.login_required()
 def create_strategy():
     """Create a new strategy, return 201, 400, 401 or 429
 
@@ -83,7 +84,7 @@ def create_strategy():
     port = strategies[-1]['port'] + 1 if len(strategies) > 0 else app.config['CONTAINER_PORT']
     sid = shortuuid.uuid()
 
-    username = auth.current_user()
+    username = basic.auth.current_user()
     user = [u for u in users if u['username'] == username]
     if len(user[0]['strategies']) >= app.config['MAX_STRATEGY_NUM']:
         abort(make_response(jsonify(
@@ -104,15 +105,15 @@ def create_strategy():
     return jsonify({'strategy': strategy}), 201
 
 
-@main.route('/api/v1.0/strategies/<sid>', methods=['DELETE'])
-@auth.login_required()
+@api.route('/strategies/<sid>', methods=['DELETE'])
+@basic.auth.login_required()
 def delete_strategy(sid):
     """Delete one strategy, return 200, 401 or 404
 
     $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${NEW_SID}
 
     """
-    username = auth.current_user()
+    username = basic.auth.current_user()
     user = [u for u in users if u['username'] == username]
     if not len(user) == 1 or not sid in user[0]['strategies']:
         abort(404)
@@ -129,15 +130,15 @@ def delete_strategy(sid):
     return jsonify({'result': True})
 
 
-@main.route('/api/v1.0/strategy/<sid>', methods=['PUT'])
-@auth.login_required()
+@api.route('/strategy/<sid>', methods=['PUT'])
+@basic.auth.login_required()
 def update_strategy(sid):
     """Change fields of one strategy, return 200, 401 or 404
 
     $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}
 
     """
-    username = auth.current_user()
+    username = basic.auth.current_user()
     user = [u for u in users if u['username'] == username]
     if (not sid in user[0]['strategies']):
         abort(404)
@@ -154,8 +155,8 @@ def update_strategy(sid):
     return jsonify({'strategy': s})
 
 
-@main.route('/api/v1.0/strategy/<sid>/start', methods=['PUT'])
-@auth.login_required()
+@api.route('/strategy/<sid>/start', methods=['PUT'])
+@basic.auth.login_required()
 def start_ide(sid):
     """Star IDE for one strategy, return 200, 401, 404, 429 or 500
 
@@ -163,7 +164,7 @@ def start_ide(sid):
 
     """
     app = current_app._get_current_object()
-    username = auth.current_user()
+    username = basic.auth.current_user()
     user = [u for u in users if u['username'] == username]
     if not sid in user[0]['strategies']:
         abort(404)
@@ -192,15 +193,15 @@ def start_ide(sid):
     return rc, 500
 
 
-@main.route('/api/v1.0/strategy/<sid>/stop', methods=['PUT'])
-@auth.login_required()
+@api.route('/strategy/<sid>/stop', methods=['PUT'])
+@basic.auth.login_required()
 def stop_ide(sid):
     """Stop IDE for one strategy, return 200, 401 or 404
 
     $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/stop
 
     """
-    username = auth.current_user()
+    username = basic.auth.current_user()
     user = [u for u in users if u['username'] == username]
     if not sid in user[0]['strategies']:
         abort(404)
