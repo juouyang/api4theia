@@ -33,6 +33,8 @@ def run_container(uid, sid, port):
             out.write(app.config['HELLO_MATPLOTLIB'])
         with open(src_path + '/.sandbox/02_hello_plotly.py', "w") as out:
             out.write(app.config['HELLO_PLOTLY'])
+        with open(src_path + '/.sandbox/03_hello_tensorflow.py', "w") as out:
+            out.write(app.config['HELLO_TENSORFLOW'])
         sp.call("cd " + src_path + ";" + app.config['GIT_INIT'], shell=True)
     else:
         if os.path.isdir(src_template):
