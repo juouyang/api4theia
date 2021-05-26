@@ -61,7 +61,7 @@ def run_container(uid, sid, port):
                     src_path + '/': {'bind': '/home/project/', 'mode': 'rw'},
                     theia_config_path + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
                 },
-                mem_limit="1g",
+                mem_limit="3g",
                 privileged=False,
                 environment={
                     'USERNAME': user[0]['username'], 'PASSWORD': user[0]['password']}
