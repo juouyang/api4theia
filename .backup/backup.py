@@ -60,9 +60,9 @@ def run_container(uid, sid, port):
             out.write(app.config['GIT_IGNORE'])
         os.makedirs(src_path + '/.sandbox', exist_ok=True)
         with open(src_path + '/.sandbox/01_matplotlib_example.py', "w") as out:
-            out.write(app.config['MATPLOTLIB_SAMPLE'])
+            out.write(app.config['HELLO_MATPLOTLIB'])
         with open(src_path + '/.sandbox/02_ploty_candlestick.py', "w") as out:
-            out.write(app.config['PLOTLY_SAMPLE'])
+            out.write(app.config['HELLO_PLOTLY'])
         sp.call("cd " + src_path + ";" + app.config['GIT_INIT'], shell=True)
     else:
         if os.path.isdir(src_template):

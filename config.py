@@ -17,7 +17,7 @@ class Config:
         "**/.Trash*\n"
     )
     GIT_INIT = "git init;git config user.email 'root@local';git add ./*;git add .gitignore;git commit -m 'first commit'"
-    MATPLOTLIB_SAMPLE = (
+    HELLO_MATPLOTLIB = (
         "import matplotlib\n"
         "import matplotlib.pyplot as plt\n"
         "import numpy as np\n"
@@ -29,7 +29,7 @@ class Config:
         "ax.grid()\n"
         "fig.savefig(\"plot.png\")\n"
     )
-    PLOTLY_SAMPLE = (
+    HELLO_PLOTLY = (
         "import plotly.graph_objects as go\n"
         "import pandas as pd\n"
         "from datetime import datetime\n"
