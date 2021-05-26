@@ -1,5 +1,6 @@
 # flask-restful-api for theia container
 
+
 ## Prepare
 
 ```
@@ -11,21 +12,28 @@ venv/bin/pip install -U pip
 venv/bin/pip install -r requirements.txt
 ```
 
+
 ## Run
 
 ```
+cd api4theia/
 source venv/bin/activate
 export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))')
 sudo --preserve-env=SECRET_KEY ./api4theia.py
 ```
 
+
 ## Test
 
 ```
+cd api4theia/
 python -m pytest
 ```
 
 
-## Documentation
+## Install as systemd service
 
-https://localhosts:5000/doc
+```
+cd api4theia/scripts/
+bash install_systemd_services.sh
+```
