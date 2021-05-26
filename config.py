@@ -54,7 +54,7 @@ class Config:
 class DevelopmentConfig(Config):
     API_PORT = 5000
     CONTAINER_PORT = 30000
-    WTF_CSRF_ENABLED = False
+    WTF_CSRF_ENABLED = True
     LOG_LEVEL = 0 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
     FQDN = "pve.dev.net"
     CRT_FILE = 'app/ssl/pve.dev.net.crt'
@@ -75,7 +75,7 @@ class TestingConfig(DevelopmentConfig):
 class ProductionConfig(Config):
     API_PORT = 443
     CONTAINER_PORT = 30000
-    WTF_CSRF_ENABLED = True
+    WTF_CSRF_ENABLED = False
     LOG_LEVEL = 40 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
     FQDN = "dost1.doquant.com"
     CRT_FILE = '/etc/letsencrypt/live/dost1.doquant.com/fullchain.pem'

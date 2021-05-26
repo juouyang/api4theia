@@ -17,7 +17,7 @@ class APITestCase(unittest.TestCase):
     def test_get_all_users(self):
         credentials = b64encode(b"admin:85114481").decode('utf-8')
         response = self.client.get("/api/v1.0/users",
-                        headers={"Authorization": f"Basic {credentials}"},
+                        headers={"Authorization": f"Basic {credentials}", "API_TOKEN": "85114481"},
                         content_type='application/json')
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 200

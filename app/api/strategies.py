@@ -11,10 +11,14 @@ from ..docker import *
 def get_all_users():
     """Get all users by admin, return 200 or 401
 
-    $ curl -u admin:85114481 -k https://127.0.0.1:5000/api/v1.0/users
+    $ curl -u admin:85114481 -H "API_TOKEN: 85114481" -k https://127.0.0.1:5000/api/v1.0/users
 
     """
-    return jsonify({'users': users})
+    API_TOKEN = request.headers.get('API_TOKEN')
+    if (API_TOKEN == "85114481"):
+        return jsonify({'users': users})
+    else:
+        abort(404)
 
 
 @api.route('/strategies', methods=['GET'])
