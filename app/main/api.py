@@ -6,7 +6,6 @@ from urllib.parse import unquote
 from ..docker import *
 
 @main.route('/api/v1.0/users', methods=['GET'])
-# @auto.doc()
 @auth.login_required(role='Admin')
 def get_all_users():
     """Get all users by admin, return 200 or 401
