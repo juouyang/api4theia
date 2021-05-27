@@ -5,7 +5,7 @@ from base64 import b64encode
 
 class APITestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app('testing')
+        self.app = create_app('test')
         self.app_context = self.app.app_context()
         self.app_context.push()
         self.client = self.app.test_client()
@@ -203,6 +203,38 @@ class APITestCase(unittest.TestCase):
         assert resp_body['name'] == "//////"
 
         response = self.client.delete("/api/v1.0/strategies/" + str(created_sid),
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+
+    def test_start_and_stop_theia(self):
+        credentials = b64encode(b"admin:85114481").decode('utf-8')
+        response = self.client.post("/api/v1.0/strategies",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json',
+                        data='{"name": "my_strategy_abc"}')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 201
+        resp_body = response.json
+        created_sid = resp_body['strategy']['sid']
+
+        response = self.client.put("/api/v1.0/strategy/" + created_sid + "/start",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+        resp_body = response.json
+        theia_url = resp_body['url']
+
+        import time
+        time.sleep(3)
+
+        import requests
+        response = requests.get(theia_url, verify=False)
+        assert response.status_code == 200
+
+        response = self.client.put("/api/v1.0/strategy/" + created_sid + "/stop",
                         headers={"Authorization": f"Basic {credentials}"},
                         content_type='application/json')
         assert response.headers["Content-Type"] == "application/json"

@@ -96,6 +96,8 @@ class TestingConfig(DevelopmentConfig):
     TESTING = True
     DB = 'Ram'
     API_PORT = 65000
+    CONTAINER_PORT = 60000
+    FQDN = 'localhost'
     WTF_CSRF_ENABLED = False
 
 

@@ -14,66 +14,6 @@ api = Api(app)
 
 # backend
 
-@app.route('/api/v1.0/strategy/<sid>/start', methods=['PUT'])
-@auto.doc()
-@auth.login_required()
-def start_ide(sid):
-    """Star IDE for one strategy, return 200, 401, 404, 429 or 500
-
-    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/start
-
-    """
-    username = auth.current_user()
-    user = [u for u in users if u['username'] == username]
-    if not sid in user[0]['strategies']:
-        abort(404)
-
-    strategy_list = [s for s in strategies if s['sid'] == sid]
-    if len(strategy_list) == 0:
-        abort(404)
-    s = strategy_list[0]
-
-    user = [u for u in users if sid in u['strategies']]
-    u = user[0]
-
-    ## check running container, return 429 if more than limit
-    uid = u['uid']
-    running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', strategies))
-    if (len(running_theia_of_user) >= app.config['RUNNING_THEIA_PER_USER']):
-        abort(make_response(jsonify(
-            error="the service has reached its maximum number of container for user = "+username), 429))
-
-    rc = run_container(uid, s['sid'], s['port'])
-    if (rc == ""):
-        s['theia'] = "running"
-        return jsonify(s)
-    if (rc == "docker.errors.ImageNotFound"):
-        return rc, 404
-    return rc, 500
-
-@app.route('/api/v1.0/strategy/<sid>/stop', methods=['PUT'])
-@auto.doc()
-@auth.login_required()
-def stop_ide(sid):
-    """Stop IDE for one strategy, return 200, 401 or 404
-
-    $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/stop
-
-    """
-    username = auth.current_user()
-    user = [u for u in users if u['username'] == username]
-    if not sid in user[0]['strategies']:
-        abort(404)
-
-    strategy_list = [s for s in strategies if s['sid'] == sid]
-    if len(strategy_list) == 0:
-        abort(404)
-
-    s = strategy_list[0]
-    remove_container(s['sid'])
-    s['theia'] = "not running"
-    return jsonify(s)
-
 tasks = {}
 
 def async_api(wrapped_function):
