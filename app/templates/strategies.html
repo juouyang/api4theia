@@ -143,7 +143,7 @@
         }
 
         function check_pack_status(status_endpoint, sid) {
-            var action_api = url.protocol + "//" + url.hostname + ":5000" + status_endpoint;
+            var action_api = url.protocol + "//" + url.host + status_endpoint;
             $.ajax({
                 type: 'GET',
                 crossDomain: true,
