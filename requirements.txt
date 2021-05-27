@@ -9,3 +9,4 @@ shortuuid==1.0.1
 RUST==0.1.1
 pyOpenSSL==20.0.1
 pytest==6.2.3
+cheroot==8.5.2
