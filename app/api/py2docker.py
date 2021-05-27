@@ -71,6 +71,7 @@ class PackImage(Resource):
     @basic.auth.login_required()
     @async_api
     def get(self, sid=''):
+        app = current_app._get_current_object()
         # perform some intensive processing
         print("starting processing task, sid: '%s'" % sid)
 
@@ -79,11 +80,8 @@ class PackImage(Resource):
         uids = [u['uid'] for u in Users.users if u['username'] == username and sid in u['strategies']]
         if not len(uids) == 1:
             abort(404)
-        path = uids[0] + "/" + sid + "/src"
-
-        app = current_app._get_current_object()
-        child = sp.Popen("cd /media/nfs/theia/" + path + "; " + app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)
-        # child = sp.Popen("cd /media/nfs/theia/" + path + "; bash build.sh", shell=True, stdout=sp.PIPE)
+        path = app.config['STORAGE_POOL'] + "/" + uids[0] + "/" + sid + "/src"
+        child = sp.Popen("cd " + path + "; " + app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)
         # child = sp.Popen("echo foo; echo bar", shell=True, stdout=sp.PIPE)
         console_output = str(child.communicate()[0].decode()).strip()
         rc = child.returncode
