@@ -1,4 +1,4 @@
-from flask import render_template, g
+from flask import render_template, g, current_app
 from . import main
 from ..auth import basic
 from app.models import users, strategies
@@ -19,3 +19,9 @@ def get_strategies_html():
         filter(lambda t: str(t['sid']) in sid_list, strategies))
     g.user = user[0]
     return render_template('strategies.html', strategies=strategy_list)
+
+
+@main.route('/doc')
+def doc():
+    app = current_app._get_current_object()
+    return app.send_static_file('doc.html')
