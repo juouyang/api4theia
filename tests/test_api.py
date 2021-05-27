@@ -166,3 +166,44 @@ class APITestCase(unittest.TestCase):
                         content_type='application/json')
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 200
+
+
+    def test_update_strategy_by_sid(self):
+        credentials = b64encode(b"admin:85114481").decode('utf-8')
+        response = self.client.post("/api/v1.0/strategies",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json',
+                        data='{"name": "my_strategy_abc"}')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 201
+        resp_body = response.json
+        created_sid = resp_body['strategy']['sid']
+
+        response = self.client.get("/api/v1.0/strategy/" + created_sid + "/name",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+        resp_body = response.json
+        assert resp_body['name'] == "my_strategy_abc"
+
+        response = self.client.put("/api/v1.0/strategy/" + created_sid,
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json',
+                        data='{"name": "//////"}')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+
+        response = self.client.get("/api/v1.0/strategy/" + created_sid + "/name",
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+        resp_body = response.json
+        assert resp_body['name'] == "//////"
+
+        response = self.client.delete("/api/v1.0/strategies/" + str(created_sid),
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200

@@ -14,32 +14,6 @@ api = Api(app)
 
 # backend
 
-@app.route('/api/v1.0/strategy/<sid>', methods=['PUT'])
-@auto.doc()
-@auth.login_required()
-def update_strategy(sid):
-    """Change fields of one strategy, return 200, 401 or 404
-
-    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}
-
-    """
-    username = auth.current_user()
-    user = [u for u in users if u['username'] == username]
-    if (not sid in user[0]['strategies']):
-        abort(404)
-
-    strategy_list = [s for s in strategies if s['sid'] == sid]
-    if len(strategy_list) == 0:
-        abort(404)
-    if not request.json and 'name' in request.json and type(request.json['name']) != str:
-        abort(400)
-    s = strategy_list[0]
-    new_name = request.json.get('name', s['name'])
-    s['name'] = unquote(new_name)
-    with open('migrations/strategies.json', 'w') as f:
-        json.dump(strategies, f)
-    return jsonify({'strategy': s})
-
 @app.route('/api/v1.0/strategy/<sid>/start', methods=['PUT'])
 @auto.doc()
 @auth.login_required()
