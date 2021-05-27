@@ -9,7 +9,6 @@ from config import config
 
 csrf = CSRFProtect()
 cors = CORS()
-rapi = Api()
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -20,7 +19,14 @@ def create_app(config_name):
 
     csrf.init_app(app)
     cors.init_app(app)
-    rapi.init_app(app)
+    rapi = Api(app)
+
+    from app.models import init_data
+    init_data(app)
+
+    from app.api.py2docker import PackImage, GetTaskStatus
+    rapi.add_resource(PackImage, '/api/v1.0/strategy/<sid>/pack')
+    rapi.add_resource(GetTaskStatus, '/status/<task_id>')
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)

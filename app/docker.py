@@ -1,13 +1,13 @@
 from flask import current_app
 import docker
 import os
-from app.models import users, strategies
+from app.models import Users, Strategies
 import subprocess as sp
 
 client = docker.from_env()
 
 def sync_containers_status():
-    for strategy in strategies:
+    for strategy in Strategies.strategies:
         strategy['theia'] = "not running"
         if len(client.containers.list(all=True, filters={'name': strategy['sid']})) == 1:
             strategy['theia'] = "running"
@@ -50,7 +50,7 @@ def run_container(uid, sid, port):
 
     if len(client.containers.list(all=True, filters={'name': sid})) == 0:
         try:
-            user = [u for u in users if u['uid'] == uid]
+            user = [u for u in Users.users if u['uid'] == uid]
             if (len(user) != 1):
                 raise Exception("user not found")
             client.containers.run(

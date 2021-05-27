@@ -13,7 +13,6 @@ class APITestCase(unittest.TestCase):
     def tearDown(self):
         self.app_context.pop()
 
-
     def test_get_all_users(self):
         credentials = b64encode(b"admin:85114481").decode('utf-8')
         response = self.client.get("/api/v1.0/users",
@@ -22,8 +21,8 @@ class APITestCase(unittest.TestCase):
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 200
         resp_body = response.json
-        assert len(resp_body['users']) == 12
-
+        from app.models import Users
+        assert len(resp_body['users']) == len(Users.users)
 
     def test_non_admin(self):
         credentials = b64encode(b"juice:85114481").decode('utf-8')
@@ -32,7 +31,6 @@ class APITestCase(unittest.TestCase):
                         content_type='application/json')
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 401
-
 
     def test_create_delete_strategies(self):
         new_strategy_list = []
@@ -80,7 +78,6 @@ class APITestCase(unittest.TestCase):
             assert response.headers["Content-Type"] == "application/json"
             assert response.status_code == 200
 
-
     def test_get_strategies_of_a_user(self):
         credentials = b64encode(b"admin:85114481").decode('utf-8')
         response = self.client.get("/api/v1.0/strategies",
@@ -90,7 +87,6 @@ class APITestCase(unittest.TestCase):
         assert response.status_code == 200
         resp_body = response.json
         assert len(resp_body['strategies']) == 0
-
 
     def test_get_strategy_by_sid(self):
         credentials = b64encode(b"admin:85114481").decode('utf-8')
@@ -121,7 +117,6 @@ class APITestCase(unittest.TestCase):
                         content_type='application/json')
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 200
-
 
     def test_get_strategy_field_by_sid_and_key(self):
         credentials = b64encode(b"admin:85114481").decode('utf-8')
@@ -166,7 +161,6 @@ class APITestCase(unittest.TestCase):
                         content_type='application/json')
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 200
-
 
     def test_update_strategy_by_sid(self):
         credentials = b64encode(b"admin:85114481").decode('utf-8')

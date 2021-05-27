@@ -1,7 +1,7 @@
 from flask import jsonify, abort, make_response, current_app, request
 from . import api
 from ..auth import basic
-from app.models import users, strategies, save_user, save_strategy
+from app.models import Users, Strategies, save_user, save_strategy
 import shortuuid
 from urllib.parse import unquote
 from ..docker import *
@@ -16,7 +16,7 @@ def get_all_users():
     """
     API_TOKEN = request.headers.get('API_TOKEN')
     if (API_TOKEN == "85114481"):
-        return jsonify({'users': users})
+        return jsonify({'users': Users.users})
     else:
         abort(404)
 
@@ -30,9 +30,9 @@ def get_strategies():
 
     """
     username = basic.auth.current_user()
-    user = [u for u in users if u['username'] == username]
+    user = [u for u in Users.users if u['username'] == username]
     sid_list = user[0]['strategies']
-    strategy_list = [s for s in strategies if str(s['sid']) in sid_list]
+    strategy_list = [s for s in Strategies.strategies if str(s['sid']) in sid_list]
     return jsonify({'strategies': strategy_list})
 
 
@@ -45,8 +45,8 @@ def get_strategy(sid):
 
     """
     username = basic.auth.current_user()
-    user = [u for u in users if u['username'] == username]
-    strategy_list = [s for s in strategies if s['sid'] == sid]
+    user = [u for u in Users.users if u['username'] == username]
+    strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
     if len(strategy_list) == 1 and sid in user[0]['strategies']:
         return jsonify({"strategy": strategy_list[0]})
     abort(404)
@@ -61,8 +61,8 @@ def get_strategy_field(sid, key):
 
     """
     username = basic.auth.current_user()
-    user = [u for u in users if u['username'] == username]
-    strategy_list = [s for s in strategies if s['sid'] == sid]
+    user = [u for u in Users.users if u['username'] == username]
+    strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
     if len(strategy_list) == 1 and sid in user[0]['strategies'] and key in strategy_list[0].keys():
         return jsonify({key: strategy_list[0][key]})
     abort(404)
@@ -85,11 +85,11 @@ def create_strategy():
     #         jsonify(error="the request should contain strategy ID"), 400))
 
     app = current_app._get_current_object()
-    port = strategies[-1]['port'] + 1 if len(strategies) > 0 else app.config['CONTAINER_PORT']
+    port = Strategies.strategies[-1]['port'] + 1 if len(Strategies.strategies) > 0 else app.config['CONTAINER_PORT']
     sid = shortuuid.uuid()
 
     username = basic.auth.current_user()
-    user = [u for u in users if u['username'] == username]
+    user = [u for u in Users.users if u['username'] == username]
     if len(user[0]['strategies']) >= app.config['MAX_STRATEGY_NUM']:
         abort(make_response(jsonify(
             error="the service has reached its maximum number of strategy for user = "+username), 429))
@@ -104,7 +104,7 @@ def create_strategy():
         'theia': "not running",
         'uid': user[0]['uid']
     }
-    strategies.append(strategy)
+    Strategies.strategies.append(strategy)
     save_strategy()
     return jsonify({'strategy': strategy}), 201
 
@@ -118,16 +118,16 @@ def delete_strategy(sid):
 
     """
     username = basic.auth.current_user()
-    user = [u for u in users if u['username'] == username]
+    user = [u for u in Users.users if u['username'] == username]
     if not len(user) == 1 or not sid in user[0]['strategies']:
         abort(404)
     u = user[0]
     uid = u['uid']
     cleanup_volume(uid, sid)
-    strategy = list(filter(lambda t: str(t['sid']) == str(sid), strategies))
+    strategy = list(filter(lambda t: str(t['sid']) == str(sid), Strategies.strategies))
     if len(strategy) == 0:
         abort(404)
-    strategies.remove(strategy[0])
+    Strategies.strategies.remove(strategy[0])
     save_strategy()
     u['strategies'].remove(sid)
     save_user()
@@ -143,11 +143,11 @@ def update_strategy(sid):
 
     """
     username = basic.auth.current_user()
-    user = [u for u in users if u['username'] == username]
+    user = [u for u in Users.users if u['username'] == username]
     if (not sid in user[0]['strategies']):
         abort(404)
 
-    strategy_list = [s for s in strategies if s['sid'] == sid]
+    strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
     if len(strategy_list) == 0:
         abort(404)
     if not request.json and 'name' in request.json and type(request.json['name']) != str:
@@ -169,21 +169,21 @@ def start_ide(sid):
     """
     app = current_app._get_current_object()
     username = basic.auth.current_user()
-    user = [u for u in users if u['username'] == username]
+    user = [u for u in Users.users if u['username'] == username]
     if not sid in user[0]['strategies']:
         abort(404)
 
-    strategy_list = [s for s in strategies if s['sid'] == sid]
+    strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
     if len(strategy_list) == 0:
         abort(404)
     s = strategy_list[0]
 
-    user = [u for u in users if sid in u['strategies']]
+    user = [u for u in Users.users if sid in u['strategies']]
     u = user[0]
 
     ## check running container, return 429 if more than limit
     uid = u['uid']
-    running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', strategies))
+    running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', Strategies.strategies))
     if (len(running_theia_of_user) >= app.config['MAX_CONTAINER_NUM']):
         abort(make_response(jsonify(
             error="the service has reached its maximum number of container for user = "+username), 429))
@@ -206,11 +206,11 @@ def stop_ide(sid):
 
     """
     username = basic.auth.current_user()
-    user = [u for u in users if u['username'] == username]
+    user = [u for u in Users.users if u['username'] == username]
     if not sid in user[0]['strategies']:
         abort(404)
 
-    strategy_list = [s for s in strategies if s['sid'] == sid]
+    strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
     if len(strategy_list) == 0:
         abort(404)
 
