@@ -61,9 +61,7 @@ def run_container(uid, sid, port):
                 ports={'443/tcp': port},
                 volumes={
                     src_path + '/': {'bind': '/home/project/', 'mode': 'rw'},
-                    theia_config_path + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'},
-                    '/var/run/docker.sock': {'bind': '/var/run/docker.sock', 'mode': 'rw'},
-                    '/usr/bin/docker': {'bind': '/usr/bin/docker', 'mode': 'rw'}
+                    theia_config_path + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
                 },
                 mem_limit="3g",
                 privileged=False,
