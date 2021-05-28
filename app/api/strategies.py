@@ -167,16 +167,17 @@ def start_ide(sid):
     $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/start
 
     """
+    strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
+    if len(strategy_list) == 0:
+        abort(404)
+    s = strategy_list[0]
+    s['theia'] = "running"
+
     app = current_app._get_current_object()
     username = basic.auth.current_user()
     user = [u for u in Users.users if u['username'] == username]
     if not sid in user[0]['strategies']:
         abort(404)
-
-    strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
-    if len(strategy_list) == 0:
-        abort(404)
-    s = strategy_list[0]
 
     user = [u for u in Users.users if sid in u['strategies']]
     u = user[0]
@@ -184,7 +185,8 @@ def start_ide(sid):
     ## check running container, return 429 if more than limit
     uid = u['uid']
     running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', Strategies.strategies))
-    if (len(running_theia_of_user) >= app.config['MAX_CONTAINER_NUM']):
+    if (len(running_theia_of_user) > app.config['MAX_CONTAINER_NUM']):
+        s['theia'] = "not running"
         abort(make_response(jsonify(
             error="the service has reached its maximum number of container for user = "+username), 429))
 
