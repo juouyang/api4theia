@@ -13,6 +13,13 @@
     <link rel="stylesheet" href="static/css/buttonload.css">
     <link rel="stylesheet" href="static/css/disablelink.css">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        .tooltip-inner {
+            white-space: pre;
+            max-width: none;
+            text-align: left;
+        }
+    </style>
     <script>
         const endpoint = "{{ url_for(request.endpoint) }}"
         const url = new URL("{{ request.url }}")
@@ -153,7 +160,7 @@
                     if (ret_code == "202") {
                         setTimeout(function () {
                             check_pack_status(status_endpoint, sid);
-                        }, 1000);
+                        }, 3000);
                     } else {
                         var $btn = $("#btn_pack_" + sid);
                         $btn.button('reset');
@@ -162,10 +169,20 @@
 
                         var textedJson = "";
                         for (var key in data) textedJson += data[key] + "\n";
-                        $('#myTextarea').text(textedJson);
+                        $btn.attr('data-toggle', 'tooltip');
+                        $btn.attr('title', textedJson);
+                        // $btn.tooltip().tooltip("show");
                     }
                 }
             }).fail(function (data) {
+                console.error(data);
+                if (data.status == 0) {
+                    setTimeout(function () {
+                        check_pack_status(status_endpoint, sid);
+                    }, 3000);
+                    return;
+                }
+
                 var $btn = $("#btn_pack_" + sid);
                 $btn.button('reset');
                 $btn.removeClass('btn-outline-primary');
@@ -173,7 +190,9 @@
 
                 var textedJson = "";
                 for (var key in data.responseJSON) textedJson += data.responseJSON[key] + "\n";
-                $('#myTextarea').text(textedJson);
+                $btn.attr('data-toggle', 'tooltip');
+                $btn.attr('title', textedJson);
+                $btn.tooltip().tooltip("show");
             });
         }
 
@@ -242,8 +261,9 @@
                 {% endif %}
                 <span class="input-group-btn">
                     <button type="button" class="btn btn-outline-primary loading buttonload"
+                        data-placement="left"
                         id="btn_pack_{{ strategy['sid'] }}" onclick="pack_onClick(this.id)"
-                        data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Packing ............">
+                        data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Packing ...........">
                         Pack Docker Image
                     </button>
                 </span>
