@@ -80,7 +80,7 @@ class PackImage(Resource):
         uids = [u['uid'] for u in Users.users if u['username'] == username and sid in u['strategies']]
         if not len(uids) == 1:
             abort(404)
-        src_path = app.config['STORAGE_POOL'] + "/" + uids[0] + "/" + sid + "/src"
+        src_path = app.config['STORAGE_POOL'] + "/strategies/" + uids[0] + "/" + sid
         if not os.path.isdir(src_path):
             return {'error': 'cannot found source directory'}, 404
         child = sp.Popen("cd " + src_path + " && " + app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)

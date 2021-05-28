@@ -19,7 +19,7 @@ def run_container(uid, sid, port):
         return "docker.errors.ImageNotFound"
 
     src_template = app.config['TEMPLATE_PROJECT']
-    src_path = app.config['STORAGE_POOL'] + '/' + uid + '/' + sid + '/src'
+    src_path = app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid
     if not os.path.isdir(src_path):
         os.makedirs(src_path, exist_ok=True)
         if os.path.isdir(src_template):
@@ -44,7 +44,7 @@ def run_container(uid, sid, port):
                     "/__main__.py " + src_path, shell=True)
 
     theia_config_path = app.config['STORAGE_POOL'] + \
-        '/' + uid + '/' + sid + '/theia_config'
+        '/theia_config/' + uid + '/' + sid
     if not os.path.isdir(theia_config_path):
         os.makedirs(theia_config_path, exist_ok=True)
 
