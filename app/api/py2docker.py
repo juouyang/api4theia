@@ -7,6 +7,7 @@ from functools import wraps
 from datetime import datetime
 import threading
 import subprocess as sp
+import os
 
 tasks = {}
 
@@ -49,7 +50,6 @@ def async_api(wrapped_function):
 
         # Return a 202 response, with a link that the client can use to
         # obtain task status
-        print(url_for('gettaskstatus', task_id=task_id))
         return url_for('gettaskstatus', task_id=task_id), 202, {'Location': url_for('gettaskstatus', task_id=task_id)}
     return new_function
 
@@ -73,20 +73,21 @@ class PackImage(Resource):
     def get(self, sid=''):
         app = current_app._get_current_object()
         # perform some intensive processing
-        print("starting processing task, sid: '%s'" % sid)
+        app.logger.info("starting processing task, sid: '%s'" % sid)
 
         # user ID
         username = request.authorization['username']
         uids = [u['uid'] for u in Users.users if u['username'] == username and sid in u['strategies']]
         if not len(uids) == 1:
             abort(404)
-        path = app.config['STORAGE_POOL'] + "/" + uids[0] + "/" + sid + "/src"
-        child = sp.Popen("cd " + path + "; " + app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)
-        # child = sp.Popen("echo foo; echo bar", shell=True, stdout=sp.PIPE)
+        src_path = app.config['STORAGE_POOL'] + "/" + uids[0] + "/" + sid + "/src"
+        if not os.path.isdir(src_path):
+            return {'error': 'cannot found source directory'}, 404
+        child = sp.Popen("cd " + src_path + " && " + app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)
         console_output = str(child.communicate()[0].decode()).strip()
         rc = child.returncode
 
-        print("completed processing task with %d" % rc)
+        app.logger.info("completed processing task with %d" % rc)
 
         list = console_output.split('\n')
         json = []
