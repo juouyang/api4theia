@@ -1,11 +1,1 @@
-body {
-    padding: 3rem;
-    font-size: 16px;
-  }
-  textarea {
-    width: 100%;
-    min-height: 6rem;
-    font-family: "Lucida Console", Monaco, monospace;
-    font-size: 0.8rem;
-    line-height: 1.2;
-  }
+body{padding:3rem;font-size:16px}textarea{resize:vertical;width:100%;min-height:6rem;font-family:"Lucida Console",Monaco,monospace;font-size:.8rem;line-height:1.2}

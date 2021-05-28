@@ -12,14 +12,8 @@
     <link rel="stylesheet" href="static/css/slider.css">
     <link rel="stylesheet" href="static/css/buttonload.css">
     <link rel="stylesheet" href="static/css/disablelink.css">
+    <link rel="stylesheet" href="static/css/tooltips.css">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <style>
-        .tooltip-inner {
-            white-space: pre;
-            max-width: none;
-            text-align: left;
-        }
-    </style>
     <script>
         const endpoint = "{{ url_for(request.endpoint) }}"
         const url = new URL("{{ request.url }}")
