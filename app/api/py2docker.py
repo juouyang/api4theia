@@ -43,10 +43,9 @@ def async_api(wrapped_function):
         task_id = sid
 
         # Record the task, and then launch it
-        tasks[task_id] = {'task_thread': threading.Thread(
-            target=task_call, args=(current_app._get_current_object(),
-                                    request.environ))}
-        tasks[task_id]['task_thread'].start()
+        if task_id not in tasks or not tasks[task_id]['task_thread'].is_alive():
+            tasks[task_id] = {'task_thread': threading.Thread(target=task_call, args=(current_app._get_current_object(), request.environ))}
+            tasks[task_id]['task_thread'].start()
 
         # Return a 202 response, with a link that the client can use to
         # obtain task status
