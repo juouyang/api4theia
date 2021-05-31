@@ -10,6 +10,8 @@ python3 -m venv venv/
 source venv/bin/activate
 venv/bin/pip install -U pip
 venv/bin/pip install -r requirements.txt
+cd api4theia/migrations/
+bash init_strategy_template.sh
 ```
 
 
