@@ -83,6 +83,7 @@ def remove_container(sid):
 
 def cleanup_volume(uid, sid):
     app = current_app._get_current_object()
-    folderpath = app.config['STORAGE_POOL'] + '/' + uid + '/' + sid
     remove_container(sid)
-    sp.call("rm -rf " + folderpath, shell=True)
+    src_path = app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid
+    theia_config_path = app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid
+    sp.call("rm -rf " + src_path + " " + theia_config_path, shell=True)
