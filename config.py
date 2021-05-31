@@ -86,7 +86,7 @@ class DevelopmentConfig(Config):
     FQDN = "pve.dev.net"
     CRT_FILE = 'app/ssl/pve.dev.net.crt'
     KEY_FILE = 'app/ssl/pve.dev.net.key'
-    TEMPLATE_PROJECT = "/root/builds/Doquant/Strategy"
+    TEMPLATE_PROJECT = basedir + "/migrations/Doquant/Strategy"
     STORAGE_POOL = "/media/nfs/theia"
     MAX_CONTAINER_NUM = 100
     MAX_STRATEGY_NUM = 100
@@ -109,7 +109,7 @@ class ProductionConfig(Config):
     FQDN = "dost1.doquant.com"
     CRT_FILE = '/etc/letsencrypt/live/dost1.doquant.com/fullchain.pem'
     KEY_FILE = '/etc/letsencrypt/live/dost1.doquant.com/privkey.pem'
-    TEMPLATE_PROJECT = "/home/aicots/builds/Doquant/Strategy"
+    TEMPLATE_PROJECT = basedir + "/migrations/Doquant/Strategy"
     STORAGE_POOL = "/media/aicots/ssd/theia"
     MAX_CONTAINER_NUM = 3
     MAX_STRATEGY_NUM = 100
