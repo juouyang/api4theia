@@ -5,13 +5,14 @@ from cheroot.wsgi import Server as WSGIServer
 from cheroot.wsgi import PathInfoDispatcher as WSGIPathInfoDispatcher
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 import os
+from config import config, ProductionConfig
 
 
 flask_config = os.getenv('FLASK_CONFIG') or 'default'
 app = create_app(flask_config)
 sync_containers_status()
 
-if (flask_config == 'prod'):
+if (flask_config == 'prod' or config[flask_config] is ProductionConfig):
     d = WSGIPathInfoDispatcher({'/': app})
     server = WSGIServer(('0.0.0.0', app.config['API_PORT']), d)
     server.ssl_adapter =  BuiltinSSLAdapter(app.config['CRT_FILE'], app.config['KEY_FILE'], None)
