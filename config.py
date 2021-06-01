@@ -71,6 +71,18 @@ class Config:
         "])\n"
         "probability_model(x_test[:5])\n"
     )
+    HELLO_TALIB = (
+        "import numpy as np\n"
+        "import pandas as pd\n"
+        "import talib\n"
+        "all_ta_label = talib.get_functions()\n"
+        "all_ta_groups = talib.get_function_groups()\n"
+        "table = pd.DataFrame({\n"
+        "    'TA-Lib Groups': list(all_ta_groups.keys()),\n"
+        "    'Index Count': list(map(lambda x: len(x), all_ta_groups.values()))\n"
+        "})\n"
+        "print(table)\n"
+    )
     PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 
     @staticmethod

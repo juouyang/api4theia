@@ -35,6 +35,8 @@ def run_container(uid, sid, port):
             out.write(app.config['HELLO_PLOTLY'])
         with open(src_path + '/.sandbox/03_hello_tensorflow.py', "w") as out:
             out.write(app.config['HELLO_TENSORFLOW'])
+        with open(src_path + '/.sandbox/04_hello_talib.py', "w") as out:
+            out.write(app.config['HELLO_TALIB'])
         sp.call("cd " + src_path + ";" + app.config['GIT_INIT'], shell=True)
     else:
         if os.path.isdir(src_template):
