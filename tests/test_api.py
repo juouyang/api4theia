@@ -233,3 +233,9 @@ class APITestCase(unittest.TestCase):
                         content_type='application/json')
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 200
+
+        response = self.client.delete("/api/v1.0/strategies/" + str(created_sid),
+                        headers={"Authorization": f"Basic {credentials}"},
+                        content_type='application/json')
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200

@@ -160,7 +160,6 @@ def update_strategy(sid):
 
 
 @api.route('/strategy/<sid>/start', methods=['PUT'])
-@basic.auth.login_required()
 def start_ide(sid):
     """Star IDE for one strategy, return 200, 401, 404, 429 or 500
 
@@ -174,53 +173,41 @@ def start_ide(sid):
     s['theia'] = "running"
 
     app = current_app._get_current_object()
-    username = basic.auth.current_user()
-    user = [u for u in Users.users if u['username'] == username]
-    if not sid in user[0]['strategies']:
-        abort(404)
-
-    user = [u for u in Users.users if sid in u['strategies']]
-    u = user[0]
 
     ## check running container, return 429 if more than limit
-    uid = u['uid']
+    uid = s['uid']
     running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', Strategies.strategies))
     if (len(running_theia_of_user) > app.config['MAX_CONTAINER_NUM']):
         s['theia'] = "not running"
-        abort(make_response(jsonify(
-            error="the service has reached its maximum number of container for user = "+username), 429))
+        abort(make_response(jsonify(error="the service has reached its maximum number of container "), 429))
 
     rc = run_container(uid, s['sid'], s['port'])
     if (rc == ""):
         s['theia'] = "running"
         return jsonify(s)
+    s['theia'] = "not running"
     if (rc == "docker.errors.ImageNotFound"):
-        return rc, 404
+        abort(make_response(jsonify(error=rc), 404))
     return rc, 500
 
 
 @api.route('/strategy/<sid>/stop', methods=['PUT'])
-@basic.auth.login_required()
 def stop_ide(sid):
     """Stop IDE for one strategy, return 200, 401 or 404
 
     $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/stop
 
     """
-    username = basic.auth.current_user()
-    user = [u for u in Users.users if u['username'] == username]
-    if not sid in user[0]['strategies']:
-        abort(404)
-
     strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
     if len(strategy_list) == 0:
         abort(404)
 
     s = strategy_list[0]
-    remove_container(s['sid'])
+    remove_container(s['uid'], s['sid'])
     s['theia'] = "not running"
     return jsonify(s)
 
+# ================================================================================================
 
 @api.route('/strategy/<uid>/<sid>/start', methods=['PUT'])
 def start_ide_without_check(uid, sid):
@@ -229,9 +216,12 @@ def start_ide_without_check(uid, sid):
     $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/start
 
     """
-    rc = run_container_without_check(uid, sid)
+    from ..docker import Port
+    port = Port.g_available_port
+    rc = run_container(uid, sid, port)
     if (rc == ""):
-        return jsonify("port: 60000")
+        Port.g_available_port = port + 1
+        return jsonify({'port': port})
     if (rc == "docker.errors.ImageNotFound"):
         return rc, 404
     return rc, 500
@@ -244,7 +234,7 @@ def stop_ide_without_check(uid, sid):
     $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/stop
 
     """
-    rc = remove_container_without_check(uid, sid)
+    rc = remove_container(uid, sid)
     if (rc == ""):
         return jsonify({'result': True})
     if (rc == "container not found"):
@@ -256,10 +246,10 @@ def stop_ide_without_check(uid, sid):
 def delete_strategy_without_check(uid, sid):
     """Delete one strategy, return 200 or 500
 
-    $ curl -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${USER_ID}/${STRATEGY_ID}
+    $ curl -i -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${USER_ID}/${STRATEGY_ID}
 
     """
-    rc = cleanup_volume_without_check(uid, sid)
+    rc = cleanup_volume(uid, sid)
     if (rc == ""):
         return jsonify({'result': True})
     return rc, 500
