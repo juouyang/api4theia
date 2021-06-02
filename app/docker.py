@@ -36,6 +36,8 @@ def run_container(uid, sid, port):
             out.write(app.config['HELLO_PLOTLY'])
         with open(src_path + '/.sandbox/interactive/03_hello_scipy.py', "w") as out:
             out.write(app.config['HELLO_SCIPY'])
+        with open(src_path + '/.sandbox/interactive/04_hello_pytorch.py', "w") as out:
+            out.write(app.config['HELLO_PYTORCH'])
         # terminal
         os.makedirs(src_path + '/.sandbox/terminal', exist_ok=True)
         with open(src_path + '/.sandbox/terminal/01_hello_tensorflow.py', "w") as out:

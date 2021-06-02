@@ -116,6 +116,19 @@ class Config:
         "data = quandl.get_table('ZACKS/FC', ticker='AAPL')\n"
         "print(data.head())\n"
     )
+    HELLO_PYTORCH = (
+        "import torch\n"
+        "import matplotlib.pyplot as plt\n"
+        "myTensor = torch.FloatTensor(7, 7)\n"
+        "myTensor[:, :] = 0   # Assign zeros everywhere in the matrix.\n"
+        "myTensor[3, 3] = 1   # Assign one in position 3, 3\n"
+        "myTensor[:2, :] = 1   # Assign ones on the top 2 rows.\n"
+        "myTensor[-2:, :] = 1    # Assign ones on the bottom 2 rows.\n"
+        "plt.figure()\n"
+        "plt.imshow(myTensor.numpy())\n"
+        "plt.colorbar()\n"
+        "plt.show()\n"
+    )
     PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 
     @staticmethod
