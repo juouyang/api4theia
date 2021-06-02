@@ -96,7 +96,7 @@
         </ul>
         <p class="docstring">Start IDE for one strategy, return 200, 304, 404 or 500<br>
             <br>
-            $ uID=u001; sID=s001; curl -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/start"
+            $ uID=uid-000000; sID=sid-000000; curl -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/start"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/start</a><br>
             {"port":60000}<br>
             <br>
@@ -124,7 +124,7 @@
         </ul>
         <p class="docstring">Stop IDE for one strategy, return 200, 404 or 500<br>
             <br>
-            $ uID=u001; sID=s001; curl -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/stop"
+            $ uID=uid-000000; sID=sid-000000; curl -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/stop"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/stop</a><br>
             {"result":true}<br>
             <br>
@@ -151,7 +151,7 @@
         </ul>
         <p class="docstring">Delete all files of one strategy, return 200 or 500<br>
             <br>
-            $ uID=u001; sID=s001; curl -X DELETE -k <a href="/api/v1.0/strategies/$%7BuID%7D/$%7BsID%7D"
+            $ uID=uid-000000; sID=sid-000000; curl -X DELETE -k <a href="/api/v1.0/strategies/$%7BuID%7D/$%7BsID%7D"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategies/${uID}/${sID}</a><br>
             {"result":true}<br>
             <br>
