@@ -69,9 +69,6 @@ def run_container(uid, sid, port):
     if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) == 0:
         try:
             user = [u for u in Users.users if u['uid'] == uid]
-            if (len(user) == 1):
-                username = user[0]['username']
-                password = user[0]['password']
             client.containers.run(
                 app.config['DOCKER_IMAGE'],
                 auto_remove=True,
@@ -85,11 +82,15 @@ def run_container(uid, sid, port):
                 mem_limit="3g",
                 privileged=False,
                 environment={
-                    'USERNAME': username, 'PASSWORD': password}
+                    'USERNAME': user[0]['username'] if (len(user) == 1) else '',
+                    'PASSWORD': user[0]['password'] if (len(user) == 1) else ''
+                }
             )
+            return ""
         except:
             return "cannot start conatiner, maybe port: %i is used by other application" % port
-    return ""
+    else:
+        return "duplicate call"
 
 
 def remove_container(uid, sid):

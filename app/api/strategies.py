@@ -211,7 +211,7 @@ def stop_ide(sid):
 
 @api.route('/strategy/<uid>/<sid>/start', methods=['PUT'])
 def start_ide_without_check(uid, sid):
-    """Star IDE for one strategy, return 200, 404 or 500
+    """Star IDE for one strategy, return 200, 304, 404 or 500
 
     $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/start
 
@@ -222,6 +222,8 @@ def start_ide_without_check(uid, sid):
     if (rc == ""):
         Port.g_available_port = port + 1
         return jsonify({'port': port})
+    if (rc == "duplicate call"):
+        return rc, 304
     if (rc == "docker.errors.ImageNotFound"):
         return rc, 404
     return rc, 500
