@@ -45,6 +45,8 @@ def prepare_python_project(uid, sid):
             out.write(app.config['HELLO_STATSMODEL'])
         with open(src_path + '/.sandbox/terminal/04_hello_quandl.py', "w") as out:
             out.write(app.config['HELLO_QUANDL'])
+        with open(src_path + '/.sandbox/terminal/05_hello_caffe2.py', "w") as out:
+            out.write(app.config['HELLO_CAFFE2'])
         sp.call("cd " + src_path + ";" + app.config['GIT_INIT'], shell=True)
     else:
         if os.path.isdir(src_template):

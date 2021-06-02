@@ -129,6 +129,18 @@ class Config:
         "plt.colorbar()\n"
         "plt.show()\n"
     )
+    HELLO_CAFFE2 = (
+        "from caffe2.python import workspace\n"
+        "import numpy as np\n"
+        "print ('Creating random data')\n"
+        "data = np.random.rand(3, 2)\n"
+        "print(data)\n"
+        "print('Adding data to workspace ...')\n"
+        "workspace.FeedBlob('mydata', data)\n"
+        "print('Retrieving data from workspace')\n"
+        "mydata = workspace.FetchBlob('mydata')\n"
+        "print(mydata)\n"
+    )
     PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 
     @staticmethod
