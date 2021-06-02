@@ -76,260 +76,83 @@
     <h1>
         Documentation
     </h1>
-
-
     <div class="mapping">
-        <a id="rule-/api/v1.0/strategies" class="rule">
-            <h2>/api/v1.0/strategies</h2>
+        <a id="rule-/api/v1.0/strategy/%3CuID%3E/%3CsID%3E/start" class="rule">
+            <h2>/api/v1.0/strategy/&lt;uID&gt;/&lt;sID&gt;/start</h2>
         </a>
         <ul class="methods">
-
-            <a href="/api/v1.0/strategies" class="getmethod">
-                <li class="method">GET</li>
-            </a>
-
-
-            <li class="method">HEAD</li>
-
-
             <li class="method">OPTIONS</li>
-
-
+            <li class="method">PUT</li>
         </ul>
         <ul class="arguments">
-
             <li>
-                <span class="argument">None</span>
+                <span class="argument">uID</span>
                 <span class="default"></span>
             </li>
-
+            <li>
+                <span class="argument">sID</span>
+                <span class="default"></span>
+            </li>
         </ul>
-        <p class="docstring">Get all strategies of one user, return 200 or 401<br>
+        <p class="docstring">Start IDE for one strategy, return 200, 404, 500<br>
             <br>
-            $ curl -u admin:85114481 -k <a href="https://127.0.0.1:5000/api/v1.0/strategies"
-                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategies</a><br>
+            $ curl -i -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/start"
+                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/start</a><br>
             <br>
         </p>
     </div>
 
     <div class="mapping">
-        <a id="rule-/api/v1.0/strategies" class="rule">
-            <h2>/api/v1.0/strategies</h2>
+        <a id="rule-/api/v1.0/strategy/%3CuID%3E/%3CsID%3E/stop" class="rule">
+            <h2>/api/v1.0/strategy/&lt;uID&gt;/&lt;sID&gt;/stop</h2>
         </a>
         <ul class="methods">
-
             <li class="method">OPTIONS</li>
-
-
-            <li class="method">POST</li>
-
-
+            <li class="method">PUT</li>
         </ul>
         <ul class="arguments">
-
             <li>
-                <span class="argument">None</span>
+                <span class="argument">uID</span>
                 <span class="default"></span>
             </li>
-
+            <li>
+                <span class="argument">sID</span>
+                <span class="default"></span>
+            </li>
         </ul>
-        <p class="docstring">Create a new strategy, return 201, 400, 401 or 429<br>
+        <p class="docstring">Stop IDE for one strategy, return 200, 404, 500<br>
             <br>
-            $ NEW_SID=$(curl -u admin:85114481 -sq -H "Content-Type: application/json" -X POST -d
-            '{"name":"my_strategy_name"}' -k <a href="https://127.0.0.1:5000/api/v1.0/strategies"
-                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategies</a> | jq -r '.strategy.sid')<br>
+            $ curl -i -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/stop"
+                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/stop</a><br>
             <br>
         </p>
     </div>
 
     <div class="mapping">
-        <a id="rule-/api/v1.0/strategies/%3Csid%3E" class="rule">
-            <h2>/api/v1.0/strategies/&lt;sid&gt;</h2>
+        <a id="rule-/api/v1.0/strategies/%3CuID%3E/%3CsID%3E" class="rule">
+            <h2>/api/v1.0/strategies/&lt;uID&gt;/&lt;sID&gt;</h2>
         </a>
         <ul class="methods">
-
             <li class="method">DELETE</li>
-
-
             <li class="method">OPTIONS</li>
-
-
         </ul>
         <ul class="arguments">
-
             <li>
-                <span class="argument">sid</span>
+                <span class="argument">uID</span>
                 <span class="default"></span>
             </li>
-
+            <li>
+                <span class="argument">sID</span>
+                <span class="default"></span>
+            </li>
         </ul>
-        <p class="docstring">Delete one strategy, return 200, 401 or 404<br>
+        <p class="docstring">Delete all files of one strategy, return 200 or 500<br>
             <br>
-            $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k <a
-                href="https://127.0.0.1:5000/api/v1.0/strategies/$%7BNEW_SID%7D"
-                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategies/${NEW_SID}</a><br>
+            $ curl -i -X DELETE -k <a href="/api/v1.0/strategies/$%7BuID%7D/$%7BsID%7D"
+                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategies/${uID}/${sID}</a><br>
             <br>
         </p>
     </div>
-
-    <div class="mapping">
-        <a id="rule-/api/v1.0/strategy/%3Csid%3E" class="rule">
-            <h2>/api/v1.0/strategy/&lt;sid&gt;</h2>
-        </a>
-        <ul class="methods">
-
-            <li class="method">GET</li>
-
-
-            <li class="method">HEAD</li>
-
-
-            <li class="method">OPTIONS</li>
-
-
-        </ul>
-        <ul class="arguments">
-
-            <li>
-                <span class="argument">sid</span>
-                <span class="default"></span>
-            </li>
-
-        </ul>
-        <p class="docstring">Get one strategy, return 200, 401 or 404<br>
-            <br>
-            $ curl -u admin:85114481 -k <a href="https://127.0.0.1:5000/api/v1.0/strategy/$%7BSID%7D"
-                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${SID}</a><br>
-            <br>
-        </p>
-    </div>
-
-    <div class="mapping">
-        <a id="rule-/api/v1.0/strategy/%3Csid%3E" class="rule">
-            <h2>/api/v1.0/strategy/&lt;sid&gt;</h2>
-        </a>
-        <ul class="methods">
-
-            <li class="method">OPTIONS</li>
-
-
-            <li class="method">PUT</li>
-
-
-        </ul>
-        <ul class="arguments">
-
-            <li>
-                <span class="argument">sid</span>
-                <span class="default"></span>
-            </li>
-
-        </ul>
-        <p class="docstring">Change fields of one strategy, return 200, 401 or 404<br>
-            <br>
-            $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X PUT -d '{"name":"my_strategy_1"}' -k <a
-                href="https://127.0.0.1:5000/api/v1.0/strategy/$%7BSID%7D"
-                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${SID}</a><br>
-            <br>
-        </p>
-    </div>
-
-    <div class="mapping">
-        <a id="rule-/api/v1.0/strategy/%3Csid%3E/%3Ckey%3E" class="rule">
-            <h2>/api/v1.0/strategy/&lt;sid&gt;/&lt;key&gt;</h2>
-        </a>
-        <ul class="methods">
-
-            <li class="method">GET</li>
-
-
-            <li class="method">HEAD</li>
-
-
-            <li class="method">OPTIONS</li>
-
-
-        </ul>
-        <ul class="arguments">
-
-            <li>
-                <span class="argument">sid</span>
-                <span class="default"></span>
-            </li>
-
-            <li>
-                <span class="argument">key</span>
-                <span class="default"></span>
-            </li>
-
-        </ul>
-        <p class="docstring">Get one field of one strategy, return 200, 401 or 404<br>
-            <br>
-            $ curl -u admin:85114481 -k <a href="https://127.0.0.1:5000/api/v1.0/strategy/$%7BSID%7D/$%7BKEY%7D"
-                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${SID}/${KEY}</a><br>
-            <br>
-        </p>
-    </div>
-
-    <div class="mapping">
-        <a id="rule-/api/v1.0/strategy/%3Csid%3E/start" class="rule">
-            <h2>/api/v1.0/strategy/&lt;sid&gt;/start</h2>
-        </a>
-        <ul class="methods">
-
-            <li class="method">OPTIONS</li>
-
-
-            <li class="method">PUT</li>
-
-
-        </ul>
-        <ul class="arguments">
-
-            <li>
-                <span class="argument">sid</span>
-                <span class="default"></span>
-            </li>
-
-        </ul>
-        <p class="docstring">Star IDE for one strategy, return 200, 401, 404, 429 or 500<br>
-            <br>
-            $ curl -u admin:85114481 -i -X PUT -k <a href="https://127.0.0.1:5000/api/v1.0/strategy/$%7BSID%7D/start"
-                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${SID}/start</a><br>
-            <br>
-        </p>
-    </div>
-
-    <div class="mapping">
-        <a id="rule-/api/v1.0/strategy/%3Csid%3E/stop" class="rule">
-            <h2>/api/v1.0/strategy/&lt;sid&gt;/stop</h2>
-        </a>
-        <ul class="methods">
-
-            <li class="method">OPTIONS</li>
-
-
-            <li class="method">PUT</li>
-
-
-        </ul>
-        <ul class="arguments">
-
-            <li>
-                <span class="argument">sid</span>
-                <span class="default"></span>
-            </li>
-
-        </ul>
-        <p class="docstring">Stop IDE for one strategy, return 200, 401 or 404<br>
-            <br>
-            $ curl -u admin:85114481 -i -X PUT -k <a href="https://127.0.0.1:5000/api/v1.0/strategy/$%7BSID%7D/stop"
-                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${SID}/stop</a><br>
-            <br>
-        </p>
-    </div>
-
 
 </body>
-
 </html>
