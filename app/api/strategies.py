@@ -161,7 +161,7 @@ def update_strategy(sid):
 
 @api.route('/strategy/<sid>/start', methods=['PUT'])
 def start_ide(sid):
-    """Star IDE for one strategy, return 200, 401, 404, 429 or 500
+    """Star IDE for one strategy, return 200, 304, 401, 404, 429 or 500
 
     $ curl -u admin:85114481 -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${SID}/start
 
@@ -182,10 +182,12 @@ def start_ide(sid):
         abort(make_response(jsonify(error="the service has reached its maximum number of container "), 429))
 
     rc = run_container(uid, s['sid'], s['port'])
-    if (rc == ""):
+    if (len(rc) == app.config['ONETIME_PW_LEN'] or rc == ""):
         s['theia'] = "running"
-        return jsonify(s)
+        return jsonify({'port': s['port'], 'onetime_pw': rc})
     s['theia'] = "not running"
+    if (rc == "duplicate call"):
+        return rc, 304
     if (rc == "docker.errors.ImageNotFound"):
         abort(make_response(jsonify(error=rc), 404))
     return rc, 500
@@ -216,12 +218,14 @@ def start_ide_without_check(uid, sid):
     $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/start
 
     """
+    app = current_app._get_current_object()
+
     from ..docker import Port
     port = Port.g_available_port
     rc = run_container(uid, sid, port)
-    if (rc == ""):
+    if (len(rc) == app.config['ONETIME_PW_LEN'] or rc == ""):
         Port.g_available_port = port + 1
-        return jsonify({'port': port})
+        return jsonify({'port': port, 'onetime_pw': rc})
     if (rc == "duplicate call"):
         return rc, 304
     if (rc == "docker.errors.ImageNotFound"):

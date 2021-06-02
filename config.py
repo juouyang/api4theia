@@ -5,6 +5,8 @@ class Config:
     DB = 'Json'
     SECRET_KEY = os.environ.get("SECRET_KEY") or '85114481'
     DOCKER_IMAGE = "theia-python:aicots"
+    ONETIME_PW_ENABLED = True
+    ONETIME_PW_LEN = 18
     GIT_IGNORE = (
         "/.pytest_cache/\n"
         "__pycache__/\n"
@@ -160,6 +162,7 @@ class DevelopmentConfig(Config):
     STORAGE_POOL = "/media/nfs/theia"
     MAX_CONTAINER_NUM = 100
     MAX_STRATEGY_NUM = 100
+    ONETIME_PW_ENABLED = True
 
 
 class TestingConfig(DevelopmentConfig):
@@ -169,6 +172,7 @@ class TestingConfig(DevelopmentConfig):
     CONTAINER_PORT = 40000
     FQDN = 'localhost'
     WTF_CSRF_ENABLED = False
+    ONETIME_PW_ENABLED = False
 
 
 class ProductionConfig(Config):
@@ -183,6 +187,7 @@ class ProductionConfig(Config):
     STORAGE_POOL = "/media/aicots/ssd/theia"
     MAX_CONTAINER_NUM = 3
     MAX_STRATEGY_NUM = 100
+    ONETIME_PW_ENABLED = False
 
 
 config = {

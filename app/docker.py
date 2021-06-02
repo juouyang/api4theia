@@ -3,6 +3,7 @@ import docker
 import os
 from app.models import Users, Strategies
 import subprocess as sp
+import shortuuid
 
 client = docker.from_env()
 
@@ -71,6 +72,8 @@ def run_container(uid, sid, port):
     if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) == 0:
         try:
             user = [u for u in Users.users if u['uid'] == uid]
+            username = user[0]['username'] if (len(user) == 1) else 'theia'
+            onetime_password = shortuuid.ShortUUID().random(length=app.config['ONETIME_PW_LEN']) if (app.config['ONETIME_PW_ENABLED']) else ""
             client.containers.run(
                 app.config['DOCKER_IMAGE'],
                 auto_remove=True,
@@ -84,11 +87,11 @@ def run_container(uid, sid, port):
                 mem_limit="3g",
                 privileged=False,
                 environment={
-                    'USERNAME': user[0]['username'] if (len(user) == 1) else '',
-                    'PASSWORD': user[0]['password'] if (len(user) == 1) else ''
+                    'USERNAME': username,
+                    'PASSWORD': onetime_password
                 }
             )
-            return ""
+            return onetime_password
         except:
             return "cannot start conatiner, maybe port: %i is used by other application" % port
     else:
