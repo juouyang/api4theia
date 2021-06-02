@@ -28,15 +28,25 @@ def run_container(uid, sid, port):
                     src_path + '/' + sid + '.py\"', shell=True)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])
-        os.makedirs(src_path + '/.sandbox', exist_ok=True)
-        with open(src_path + '/.sandbox/01_hello_matplotlib.py', "w") as out:
+        # interactive
+        os.makedirs(src_path + '/.sandbox/interactive', exist_ok=True)
+        with open(src_path + '/.sandbox/interactive/01_hello_matplotlib.py', "w") as out:
             out.write(app.config['HELLO_MATPLOTLIB'])
-        with open(src_path + '/.sandbox/02_hello_plotly.py', "w") as out:
+        with open(src_path + '/.sandbox/interactive/02_hello_plotly.py', "w") as out:
             out.write(app.config['HELLO_PLOTLY'])
-        with open(src_path + '/.sandbox/03_hello_tensorflow.py', "w") as out:
+        with open(src_path + '/.sandbox/interactive/03_hello_scipy.py', "w") as out:
+            out.write(app.config['HELLO_SCIPY'])
+        # terminal
+        os.makedirs(src_path + '/.sandbox/terminal', exist_ok=True)
+        with open(src_path + '/.sandbox/terminal/01_hello_tensorflow.py', "w") as out:
             out.write(app.config['HELLO_TENSORFLOW'])
-        with open(src_path + '/.sandbox/04_hello_talib.py', "w") as out:
+        with open(src_path + '/.sandbox/terminal/02_hello_talib.py', "w") as out:
             out.write(app.config['HELLO_TALIB'])
+        with open(src_path + '/.sandbox/terminal/03_hello_statsmodel.py', "w") as out:
+            out.write(app.config['HELLO_STATSMODEL'])
+        with open(src_path + '/.sandbox/terminal/04_hello_quandl.py', "w") as out:
+            out.write(app.config['HELLO_QUANDL'])
+
         sp.call("cd " + src_path + ";" + app.config['GIT_INIT'], shell=True)
     else:
         if os.path.isdir(src_template):

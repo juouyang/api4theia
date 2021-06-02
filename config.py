@@ -83,6 +83,39 @@ class Config:
         "})\n"
         "print(table)\n"
     )
+    HELLO_SCIPY = (
+        "from scipy.interpolate import interp1d\n"
+        "import pylab\n"
+        "import numpy as np\n"
+        "x = np.linspace(0, 5, 10)\n"
+        "y = np.exp(x) / np.cos(np.pi * x)\n"
+        "f_nearest = interp1d(x, y, kind='nearest')\n"
+        "f_linear  = interp1d(x, y)\n"
+        "f_cubic   = interp1d(x, y, kind='cubic')\n"
+        "x2 = np.linspace(0, 5, 100)\n"
+        "pylab.plot(x, y, 'o', label='data points')\n"
+        "pylab.plot(x2, f_nearest(x2), label='nearest')\n"
+        "pylab.plot(x2, f_linear(x2), label='linear')\n"
+        "pylab.plot(x2, f_cubic(x2), label='cubic')\n"
+        "pylab.legend()\n"
+        "pylab.show()\n"
+    )
+    HELLO_STATSMODEL = (
+        "import numpy as np\n"
+        "import statsmodels.api as sm\n"
+        "import statsmodels.formula.api as smf\n"
+        "dat = sm.datasets.get_rdataset('Guerry', 'HistData').data\n"
+        "results = smf.ols('Lottery ~ Literacy + np.log(Pop1831)', data=dat).fit()\n"
+        "print(results.summary())\n"
+    )
+    HELLO_QUANDL = (
+        "import quandl\n"
+        "quandl.ApiConfig.api_key = 'tEsTkEy-123456789' # Get your access key from https://www.quandl.com\n"
+        "data = quandl.get('NSE/OIL')\n"
+        "print(data.head())\n"
+        "data = quandl.get_table('ZACKS/FC', ticker='AAPL')\n"
+        "print(data.head())\n"
+    )
     PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
 
     @staticmethod
@@ -93,7 +126,7 @@ class Config:
 class DevelopmentConfig(Config):
     API_PORT = 5000
     CONTAINER_PORT = 30000
-    WTF_CSRF_ENABLED = True
+    WTF_CSRF_ENABLED = False
     LOG_LEVEL = 0 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
     FQDN = "pve.dev.net"
     CRT_FILE = 'app/ssl/pve.dev.net.crt'
