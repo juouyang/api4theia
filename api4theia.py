@@ -12,7 +12,7 @@ flask_config = os.getenv('FLASK_CONFIG') or 'default'
 app = create_app(flask_config)
 sync_containers_status()
 
-if (flask_config == 'default' or config[flask_config] is ProductionConfig):
+if (flask_config == 'prod' or config[flask_config] is ProductionConfig):
     d = WSGIPathInfoDispatcher({'/': app})
     server = WSGIServer(('0.0.0.0', app.config['API_PORT']), d)
     server.ssl_adapter =  BuiltinSSLAdapter(app.config['CRT_FILE'], app.config['KEY_FILE'], None)
