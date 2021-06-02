@@ -220,3 +220,46 @@ def stop_ide(sid):
     remove_container(s['sid'])
     s['theia'] = "not running"
     return jsonify(s)
+
+
+@api.route('/strategy/<uid>/<sid>/start', methods=['PUT'])
+def start_ide_without_check(uid, sid):
+    """Star IDE for one strategy, return 200, 404 or 500
+
+    $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/start
+
+    """
+    rc = run_container_without_check(uid, sid)
+    if (rc == ""):
+        return jsonify("port: 60000")
+    if (rc == "docker.errors.ImageNotFound"):
+        return rc, 404
+    return rc, 500
+
+
+@api.route('/strategy/<uid>/<sid>/stop', methods=['PUT'])
+def stop_ide_without_check(uid, sid):
+    """Stop IDE for one strategy, return 200, 404 or 500
+
+    $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/stop
+
+    """
+    rc = remove_container_without_check(uid, sid)
+    if (rc == ""):
+        return jsonify({'result': True})
+    if (rc == "container not found"):
+        return rc, 404
+    return rc, 500
+
+
+@api.route('/strategies/<uid>/<sid>', methods=['DELETE'])
+def delete_strategy_without_check(uid, sid):
+    """Delete one strategy, return 200 or 500
+
+    $ curl -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${USER_ID}/${STRATEGY_ID}
+
+    """
+    rc = cleanup_volume_without_check(uid, sid)
+    if (rc == ""):
+        return jsonify({'result': True})
+    return rc, 500
