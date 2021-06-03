@@ -1,11 +1,10 @@
 from flask import jsonify, abort, make_response, current_app, request
 from . import api
 from ..auth import basic
-from app.models import Users, save_users, Strategies, save_strategies, Ports, save_ports
+from app.models import Users, Strategies, Ports
 import shortuuid
 from urllib.parse import unquote
 from ..docker import *
-import random
 
 @api.route('/users', methods=['GET'])
 @basic.auth.login_required(role='Admin')
@@ -96,7 +95,7 @@ def create_strategy():
             error="the service has reached its maximum number of strategy for user = "+username), 429))
 
     user[0]['strategies'].append(sid)
-    save_users()
+    Users.save_users()
     strategy = {
         'sid': sid,
         'name': unquote(request.json['name']),
@@ -106,7 +105,7 @@ def create_strategy():
         'uid': user[0]['uid']
     }
     Strategies.strategies.append(strategy)
-    save_strategies()
+    Strategies.save_strategies()
     return jsonify({'strategy': strategy}), 201
 
 
@@ -129,9 +128,9 @@ def delete_strategy(sid):
     if len(strategy) == 0:
         abort(404)
     Strategies.strategies.remove(strategy[0])
-    save_strategies()
+    Strategies.save_strategies()
     u['strategies'].remove(sid)
-    save_users()
+    Users.save_users()
     return jsonify({'result': True})
 
 
@@ -156,7 +155,7 @@ def update_strategy(sid):
     s = strategy_list[0]
     new_name = request.json.get('name', s['name'])
     s['name'] = unquote(new_name)
-    save_strategies()
+    Strategies.save_strategies()
     return jsonify({'strategy': s})
 
 
@@ -220,17 +219,17 @@ def start_ide_without_check(uid, sid):
 
     """
     app = current_app._get_current_object()
-
-    port = random.choice(Ports.available_ports)
+    port = Ports.get_unused_port()
     rc = run_container(uid, sid, port)
     if (len(rc) == app.config['ONETIME_PW_LEN'] or rc == ""):
         Ports.available_ports.remove(port)
-        save_ports()
         return jsonify({'port': port, 'onetime_pw': rc}), 202
     if (rc == "duplicate call"):
         return rc, 304
     if (rc == "docker.errors.ImageNotFound"):
         return rc, 404
+    if (port == -1):
+         return "cannot find unused port", 503
     return rc, 500
 
 
@@ -266,7 +265,6 @@ def stop_ide_without_check(uid, sid):
         port = int(rc)
         if 60000 <= port <= 60999:
             Ports.available_ports.append(port)
-            save_ports()
             return jsonify({'result': True})
     except ValueError:
         return rc, 500

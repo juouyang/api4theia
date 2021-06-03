@@ -72,6 +72,8 @@ def run_container(uid, sid, port):
     prepare_python_project(uid, sid)
 
     if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) == 0:
+        if (port == -1):
+            return "cannot find unused port"
         try:
             user = [u for u in Users.users if u['uid'] == uid]
             username = user[0]['username'] if (len(user) == 1) else 'theia'
