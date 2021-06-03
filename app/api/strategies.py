@@ -214,7 +214,7 @@ def stop_ide(sid):
 
 @api.route('/strategy/<uid>/<sid>/start', methods=['PUT'])
 def start_ide_without_check(uid, sid):
-    """Star IDE for one strategy, return 200, 304, 404 or 500
+    """Star IDE for one strategy, return 202, 304, 404 or 500
 
     $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/start
 
@@ -226,12 +226,30 @@ def start_ide_without_check(uid, sid):
     if (len(rc) == app.config['ONETIME_PW_LEN'] or rc == ""):
         Ports.available_ports.remove(port)
         save_ports()
-        return jsonify({'port': port, 'onetime_pw': rc})
+        return jsonify({'port': port, 'onetime_pw': rc}), 202
     if (rc == "duplicate call"):
         return rc, 304
     if (rc == "docker.errors.ImageNotFound"):
         return rc, 404
     return rc, 500
+
+
+@api.route('/strategy/<uid>/<sid>/status', methods=['GET'])
+def get_ide_without_check(uid, sid):
+    """Get IDE for one strategy, return 200, 202, 404 or 500
+
+    $ curl -i -X GET -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/status
+
+    """
+    rc = get_container_status(uid, sid)
+    http_code = 500
+    if (rc == "started"):
+        http_code = 200
+    if (rc == "starting"):
+        http_code = 202
+    if (rc == "container not found"):
+        http_code = 404
+    return jsonify({'status': rc}), http_code
 
 
 @api.route('/strategy/<uid>/<sid>/stop', methods=['PUT'])

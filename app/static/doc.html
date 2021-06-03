@@ -94,7 +94,7 @@
                 <span class="default"></span>
             </li>
         </ul>
-        <p class="docstring">Start IDE for one strategy, return 200, 304, 404 or 500<br>
+        <p class="docstring">Start IDE for one strategy, return 202, 304, 404 or 500<br>
             <br>
             $ uID=uid-000000; sID=sid-000000; curl -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/start"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/start</a><br>
@@ -103,7 +103,34 @@
 
         </p>
     </div>
-
+    <div class="mapping">
+        <a id="rule-/api/v1.0/strategy/%3CuID%3E/%3CsID%3E/status" class="rule">
+            <h2>/api/v1.0/strategy/&lt;uID&gt;/&lt;sID&gt;/status</h2>
+        </a>
+        <br>
+        <ul class="methods">
+            <li class="method">GET</li>
+        </ul>
+        <ul class="arguments">
+            <li>
+                <span class="argument">uID</span>
+                <span class="default"></span>
+            </li>
+            <li>
+                <span class="argument">sID</span>
+                <span class="default"></span>
+            </li>
+        </ul>
+        <p class="docstring">Stop IDE for one strategy, return 200, 202, 404 or 500<br>
+            <br>
+            $ uID=uid-000000; sID=sid-000000; curl -X GET -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/status"
+                rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/status</a><br>
+            {"status":'starting'}<br>
+            or <br>
+            {"status":'started'}<br>
+            <br>
+        </p>
+    </div>
     <div class="mapping">
         <a id="rule-/api/v1.0/strategy/%3CuID%3E/%3CsID%3E/stop" class="rule">
             <h2>/api/v1.0/strategy/&lt;uID&gt;/&lt;sID&gt;/stop</h2>
@@ -130,7 +157,6 @@
             <br>
         </p>
     </div>
-
     <div class="mapping">
         <a id="rule-/api/v1.0/strategies/%3CuID%3E/%3CsID%3E" class="rule">
             <h2>/api/v1.0/strategies/&lt;uID&gt;/&lt;sID&gt;</h2>
@@ -157,6 +183,5 @@
             <br>
         </p>
     </div>
-
 </body>
 </html>

@@ -4,6 +4,8 @@ import os
 from app.models import Users, Strategies
 import subprocess as sp
 import shortuuid
+import socket
+import requests
 
 client = docker.from_env()
 
@@ -96,6 +98,24 @@ def run_container(uid, sid, port):
             return "cannot start conatiner, maybe port: %i is used by other application" % port
     else:
         return "duplicate call"
+
+
+def get_container_status(uid, sid):
+    if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) != 0:
+        container = client.containers.get(uid + "-" + sid)
+        port = container.ports['443/tcp'][0]['HostPort']
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(("127.0.0.1", int(port)))
+        if result == 0:
+            response = requests.get("https://127.0.0.1:" + str(port), verify=False)
+            if response.status_code == 200 or response.status_code == 401:
+                return "started"
+            else:
+                return "starting"
+        else:
+            return "starting"
+    else:
+        return "container not found"
 
 
 def remove_container(uid, sid):

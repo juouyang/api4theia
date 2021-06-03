@@ -253,7 +253,7 @@ class APITestCase(unittest.TestCase):
 
         import socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex((self.app.config['FQDN'], theia_port))
+        result = sock.connect_ex((self.app.config['FQDN'], int(theia_port)))
         assert result == 0
 
         import requests
