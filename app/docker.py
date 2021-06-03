@@ -62,6 +62,8 @@ def prepare_python_project(uid, sid):
         '/theia_config/' + uid + '/' + sid
     if not os.path.isdir(theia_config_path):
         os.makedirs(theia_config_path, exist_ok=True)
+        with open(theia_config_path + '/settings.json', "w") as out:
+            out.write("{\"python.showStartPage\": false}")
 
 
 def run_container(uid, sid, port):
