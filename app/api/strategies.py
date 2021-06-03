@@ -1,10 +1,11 @@
 from flask import jsonify, abort, make_response, current_app, request
 from . import api
 from ..auth import basic
-from app.models import Users, Strategies, save_user, save_strategy
+from app.models import Users, save_users, Strategies, save_strategies, Ports, save_ports
 import shortuuid
 from urllib.parse import unquote
 from ..docker import *
+import random
 
 @api.route('/users', methods=['GET'])
 @basic.auth.login_required(role='Admin')
@@ -95,7 +96,7 @@ def create_strategy():
             error="the service has reached its maximum number of strategy for user = "+username), 429))
 
     user[0]['strategies'].append(sid)
-    save_user()
+    save_users()
     strategy = {
         'sid': sid,
         'name': unquote(request.json['name']),
@@ -105,7 +106,7 @@ def create_strategy():
         'uid': user[0]['uid']
     }
     Strategies.strategies.append(strategy)
-    save_strategy()
+    save_strategies()
     return jsonify({'strategy': strategy}), 201
 
 
@@ -114,7 +115,7 @@ def create_strategy():
 def delete_strategy(sid):
     """Delete one strategy, return 200, 401 or 404
 
-    $ curl -u admin:85114481 -i -H "Content-Type: application/json" -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${NEW_SID}
+    $ curl -u admin:85114481 -i -X DELETE -k https://127.0.0.1:5000/api/v1.0/strategies/${NEW_SID}
 
     """
     username = basic.auth.current_user()
@@ -128,9 +129,9 @@ def delete_strategy(sid):
     if len(strategy) == 0:
         abort(404)
     Strategies.strategies.remove(strategy[0])
-    save_strategy()
+    save_strategies()
     u['strategies'].remove(sid)
-    save_user()
+    save_users()
     return jsonify({'result': True})
 
 
@@ -155,7 +156,7 @@ def update_strategy(sid):
     s = strategy_list[0]
     new_name = request.json.get('name', s['name'])
     s['name'] = unquote(new_name)
-    save_strategy()
+    save_strategies()
     return jsonify({'strategy': s})
 
 
@@ -220,11 +221,11 @@ def start_ide_without_check(uid, sid):
     """
     app = current_app._get_current_object()
 
-    from ..docker import Port
-    port = Port.g_available_port
+    port = random.choice(Ports.available_ports)
     rc = run_container(uid, sid, port)
     if (len(rc) == app.config['ONETIME_PW_LEN'] or rc == ""):
-        Port.g_available_port = port + 1
+        Ports.available_ports.remove(port)
+        save_ports()
         return jsonify({'port': port, 'onetime_pw': rc})
     if (rc == "duplicate call"):
         return rc, 304
@@ -241,10 +242,16 @@ def stop_ide_without_check(uid, sid):
 
     """
     rc = remove_container(uid, sid)
-    if (rc == ""):
-        return jsonify({'result': True})
     if (rc == "container not found"):
         return rc, 404
+    try:
+        port = int(rc)
+        if 60000 <= port <= 60999:
+            Ports.available_ports.append(port)
+            save_ports()
+            return jsonify({'result': True})
+    except ValueError:
+        return rc, 500
     return rc, 500
 
 

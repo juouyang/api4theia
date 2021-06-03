@@ -11,6 +11,7 @@ import os
 
 tasks = {}
 
+
 def async_api(wrapped_function):
     @wraps(wrapped_function)
     def new_function(*args, **kwargs):
@@ -44,13 +45,15 @@ def async_api(wrapped_function):
 
         # Record the task, and then launch it
         if task_id not in tasks or not tasks[task_id]['task_thread'].is_alive():
-            tasks[task_id] = {'task_thread': threading.Thread(target=task_call, args=(current_app._get_current_object(), request.environ))}
+            tasks[task_id] = {'task_thread': threading.Thread(
+                target=task_call, args=(current_app._get_current_object(), request.environ))}
             tasks[task_id]['task_thread'].start()
 
         # Return a 202 response, with a link that the client can use to
         # obtain task status
         return url_for('gettaskstatus', task_id=task_id), 202, {'Location': url_for('gettaskstatus', task_id=task_id)}
     return new_function
+
 
 class GetTaskStatus(Resource):
     def get(self, task_id):
@@ -66,6 +69,7 @@ class GetTaskStatus(Resource):
             return 'building docker image in the background ...', 202, {'Location': url_for('gettaskstatus', task_id=task_id)}
         return task['return_value']
 
+
 class PackImage(Resource):
     @basic.auth.login_required()
     @async_api
@@ -76,13 +80,16 @@ class PackImage(Resource):
 
         # user ID
         username = request.authorization['username']
-        uids = [u['uid'] for u in Users.users if u['username'] == username and sid in u['strategies']]
+        uids = [u['uid'] for u in Users.users if u['username']
+                == username and sid in u['strategies']]
         if not len(uids) == 1:
             abort(404)
-        src_path = app.config['STORAGE_POOL'] + "/strategies/" + uids[0] + "/" + sid
+        src_path = app.config['STORAGE_POOL'] + \
+            "/strategies/" + uids[0] + "/" + sid
         if not os.path.isdir(src_path):
             return {'error': 'cannot found source directory'}, 404
-        child = sp.Popen("cd " + src_path + " && " + app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)
+        child = sp.Popen("cd " + src_path + " && " +
+                         app.config['PACK_CMD'], shell=True, stdout=sp.PIPE)
         console_output = str(child.communicate()[0].decode()).strip()
         rc = child.returncode
 

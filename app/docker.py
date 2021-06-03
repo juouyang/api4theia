@@ -101,10 +101,11 @@ def run_container(uid, sid, port):
 def remove_container(uid, sid):
     if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) != 0:
         container = client.containers.get(uid + "-" + sid)
+        port = container.ports['443/tcp'][0]['HostPort']
         container.stop(
             timeout=1
         )
-        return ""
+        return port
     else:
         return "container not found"
 
@@ -116,9 +117,3 @@ def cleanup_volume(uid, sid):
     theia_config_path = app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid
     sp.call("rm -rf " + src_path + " " + theia_config_path, shell=True)
     return ""
-
-# ================================================================================================
-
-
-class Port():
-    g_available_port = 60000
