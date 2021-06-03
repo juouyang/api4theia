@@ -6,6 +6,7 @@ import shortuuid
 from urllib.parse import unquote
 from ..docker import *
 
+
 @api.route('/users', methods=['GET'])
 @basic.auth.login_required(role='Admin')
 def get_all_users():
@@ -32,7 +33,8 @@ def get_strategies():
     username = basic.auth.current_user()
     user = [u for u in Users.users if u['username'] == username]
     sid_list = user[0]['strategies']
-    strategy_list = [s for s in Strategies.strategies if str(s['sid']) in sid_list]
+    strategy_list = [
+        s for s in Strategies.strategies if str(s['sid']) in sid_list]
     return jsonify({'strategies': strategy_list})
 
 
@@ -85,7 +87,8 @@ def create_strategy():
     #         jsonify(error="the request should contain strategy ID"), 400))
 
     app = current_app._get_current_object()
-    port = Strategies.strategies[-1]['port'] + 1 if len(Strategies.strategies) > 0 else app.config['CONTAINER_PORT']
+    port = Strategies.strategies[-1]['port'] + 1 if len(
+        Strategies.strategies) > 0 else app.config['CONTAINER_PORT']
     sid = shortuuid.uuid()
 
     username = basic.auth.current_user()
@@ -124,7 +127,8 @@ def delete_strategy(sid):
     u = user[0]
     uid = u['uid']
     cleanup_volume(uid, sid)
-    strategy = list(filter(lambda t: str(t['sid']) == str(sid), Strategies.strategies))
+    strategy = list(filter(lambda t: str(
+        t['sid']) == str(sid), Strategies.strategies))
     if len(strategy) == 0:
         abort(404)
     Strategies.strategies.remove(strategy[0])
@@ -174,12 +178,14 @@ def start_ide(sid):
 
     app = current_app._get_current_object()
 
-    ## check running container, return 429 if more than limit
+    # check running container, return 429 if more than limit
     uid = s['uid']
-    running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(uid) and t['theia'] == 'running', Strategies.strategies))
+    running_theia_of_user = list(filter(lambda t: str(t['uid']) == str(
+        uid) and t['theia'] == 'running', Strategies.strategies))
     if (len(running_theia_of_user) > app.config['MAX_CONTAINER_NUM']):
         s['theia'] = "not running"
-        abort(make_response(jsonify(error="the service has reached its maximum number of container "), 429))
+        abort(make_response(
+            jsonify(error="the service has reached its maximum number of container "), 429))
 
     rc = run_container(uid, s['sid'], s['port'])
     if (len(rc) == app.config['ONETIME_PW_LEN'] or rc == ""):
@@ -211,6 +217,7 @@ def stop_ide(sid):
 
 # ================================================================================================
 
+
 @api.route('/strategy/<uid>/<sid>/start', methods=['PUT'])
 def start_ide_without_check(uid, sid):
     """Star IDE for one strategy, return 202, 304, 404 or 500
@@ -229,7 +236,7 @@ def start_ide_without_check(uid, sid):
     if (rc == "docker.errors.ImageNotFound"):
         return rc, 404
     if (port == -1):
-         return "cannot find unused port", 503
+        return "cannot find unused port", 503
     return rc, 500
 
 
@@ -258,12 +265,13 @@ def stop_ide_without_check(uid, sid):
     $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/stop
 
     """
+    app = current_app._get_current_object()
     rc = remove_container(uid, sid)
     if (rc == "container not found"):
         return rc, 404
     try:
         port = int(rc)
-        if 60000 <= port <= 60999:
+        if (not app.config['TESTING'] and 60000 <= port <= 60099) or (app.config['TESTING'] and 63000 <= port <= 63099):
             Ports.available_ports.append(port)
             return jsonify({'result': True})
     except ValueError:
