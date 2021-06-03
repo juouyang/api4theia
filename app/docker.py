@@ -30,6 +30,9 @@ def prepare_python_project(uid, sid):
             os.rename(old_file, new_file)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])
+        os.makedirs(src_path + '/.theia', exist_ok=True)
+        with open(src_path + "/.theia/launch.json", "w") as out:
+            out.write(app.config['DEBUG_SETTING'])
         # interactive
         os.makedirs(src_path + '/.sandbox/interactive', exist_ok=True)
         with open(src_path + '/.sandbox/interactive/01_hello_matplotlib.py', "w") as out:
