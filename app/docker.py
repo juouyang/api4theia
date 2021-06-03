@@ -6,6 +6,7 @@ import subprocess as sp
 import shortuuid
 import socket
 import requests
+import shutil
 
 client = docker.from_env()
 
@@ -24,8 +25,9 @@ def prepare_python_project(uid, sid):
         os.makedirs(src_path, exist_ok=True)
         if os.path.isdir(src_template):
             sp.call("cp -rf " + src_template + "/* " + src_path, shell=True)
-            sp.call("mv -f " + src_path + '/Your_Strategy.py \"' +
-                    src_path + '/' + sid + '.py\"', shell=True)
+            old_file = os.path.join(src_path, "Your_Strategy.py")
+            new_file = os.path.join(src_path, sid + '.py')
+            os.rename(old_file, new_file)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])
         # interactive
@@ -139,5 +141,6 @@ def cleanup_volume(uid, sid):
     remove_container(uid, sid)
     src_path = app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid
     theia_config_path = app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid
-    sp.call("rm -rf " + src_path + " " + theia_config_path, shell=True)
+    shutil.rmtree(src_path, ignore_errors = True)
+    shutil.rmtree(theia_config_path, ignore_errors = True)
     return ""
