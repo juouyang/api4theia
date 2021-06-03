@@ -115,7 +115,7 @@ class Config:
     )
     HELLO_QUANDL = (
         "import quandl\n"
-        "quandl.ApiConfig.api_key = 'tEsTkEy-123456789' # Get your access key from https://www.quandl.com\n"
+        "quandl.ApiConfig.api_key = 'xti1h_ei-7KweXvgU5VH' # Get your access key from https://www.quandl.com\n"
         "data = quandl.get('NSE/OIL')\n"
         "print(data.head())\n"
         "data = quandl.get_table('ZACKS/FC', ticker='AAPL')\n"
