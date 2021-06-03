@@ -20,7 +20,7 @@ class Config:
     )
     GIT_INIT = "git init;git config user.email 'root@local';git add ./*;git add .gitignore;git commit -m 'first commit'"
     DEBUG_SETTING = '''
-{"version":"0.2.0","configurations":[{"name":"Aicots: Strategy","type":"python","request":"launch","program":"${workspaceFolder}/__main__.py","console":"integratedTerminal"}]}
+{"version":"0.2.0","configurations":[{"name":"Aicots: Strategy","type":"python","request":"launch","program":"${workspaceFolder}/%s/__main__.py","console":"integratedTerminal"}]}
     '''
     HELLO_MATPLOTLIB = (
         "import matplotlib\n"

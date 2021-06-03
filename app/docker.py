@@ -30,9 +30,6 @@ def prepare_python_project(uid, sid):
             os.rename(old_file, new_file)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])
-        os.makedirs(src_path + '/.theia', exist_ok=True)
-        with open(src_path + "/.theia/launch.json", "w") as out:
-            out.write(app.config['DEBUG_SETTING'])
         # interactive
         os.makedirs(src_path + '/.sandbox/interactive', exist_ok=True)
         with open(src_path + '/.sandbox/interactive/01_hello_matplotlib.py', "w") as out:
@@ -69,6 +66,9 @@ def prepare_python_project(uid, sid):
         os.makedirs(theia_config_path, exist_ok=True)
         with open(theia_config_path + '/settings.json', "w") as out:
             out.write("{\"python.showStartPage\": false}")
+        os.makedirs(theia_config_path + '/.theia', exist_ok=True)
+        with open(theia_config_path + "/.theia/launch.json", "w") as out:
+            out.write(app.config['DEBUG_SETTING'] % sid)
 
 
 def run_container(uid, sid, port):
@@ -92,7 +92,8 @@ def run_container(uid, sid, port):
                 name=uid + "-" + sid,
                 ports={'443/tcp': port},
                 volumes={
-                    app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid + '/': {'bind': '/home/project/', 'mode': 'rw'},
+                    app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid + '/': {'bind': '/home/project/' + sid + '/', 'mode': 'rw'},
+                    app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid + '/.theia/launch.json': {'bind': '/home/project/.theia/launch.json', 'mode': 'rw'},
                     app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
                 },
                 mem_limit="3g",
