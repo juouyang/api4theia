@@ -23,8 +23,7 @@ def change_strategy_name(uid, sid, oldname, newname):
     src_path = app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid
     old_file = os.path.join(src_path, oldname + '.py')
     new_file = os.path.join(src_path, newname + '.py')
-    if os.path.exists(old_file) and os.path.exists(new_file):
-        os.rename(old_file, new_file)
+    shutil.move(old_file, new_file)
 
 
 def prepare_python_project(uid, sid):
