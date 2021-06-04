@@ -165,7 +165,7 @@ class DevelopmentConfig(Config):
     STORAGE_POOL = "/media/nfs/theia"
     MAX_CONTAINER_NUM = 100
     MAX_STRATEGY_NUM = 100
-    ONETIME_PW_ENABLED = True
+    ONETIME_PW_ENABLED = False
 
 
 class TestingConfig(DevelopmentConfig):
