@@ -17,8 +17,19 @@ def sync_containers_status():
             strategy['theia'] = "running"
 
 
+def change_strategy_name(uid, sid, oldname, newname):
+    app = current_app._get_current_object()
+    src_path = app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid
+    old_file = os.path.join(src_path, oldname + '.py')
+    new_file = os.path.join(src_path, newname + '.py')
+    if os.path.exists(old_file) and os.path.exists(new_file):
+        os.rename(old_file, new_file)
+
+
 def prepare_python_project(uid, sid):
     app = current_app._get_current_object()
+    strategy_list = [s for s in Strategies.strategies if s['sid'] == sid]
+    sname = strategy_list[0]['name'] if (len(strategy_list) == 1) else sid
     src_template = app.config['TEMPLATE_PROJECT']
     src_path = app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid
     if not os.path.isdir(src_path):
@@ -26,7 +37,7 @@ def prepare_python_project(uid, sid):
         if os.path.isdir(src_template):
             sp.call("cp -rf " + src_template + "/* " + src_path, shell=True)
             old_file = os.path.join(src_path, "Your_Strategy.py")
-            new_file = os.path.join(src_path, sid + '.py')
+            new_file = os.path.join(src_path, sname + '.py')
             os.rename(old_file, new_file)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])

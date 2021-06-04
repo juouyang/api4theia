@@ -157,9 +157,11 @@ def update_strategy(sid):
     if not request.json and 'name' in request.json and type(request.json['name']) != str:
         abort(400)
     s = strategy_list[0]
+    old_name = s['name']
     new_name = request.json.get('name', s['name'])
     s['name'] = unquote(new_name)
     Strategies.save_strategies()
+    change_strategy_name(s['uid'], sid, old_name, s['name'])
     return jsonify({'strategy': s})
 
 
