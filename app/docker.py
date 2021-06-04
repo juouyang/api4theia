@@ -30,28 +30,6 @@ def prepare_python_project(uid, sid):
             os.rename(old_file, new_file)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])
-        # interactive
-        os.makedirs(src_path + '/.sandbox/interactive', exist_ok=True)
-        with open(src_path + '/.sandbox/interactive/01_hello_matplotlib.py', "w") as out:
-            out.write(app.config['HELLO_MATPLOTLIB'])
-        with open(src_path + '/.sandbox/interactive/02_hello_plotly.py', "w") as out:
-            out.write(app.config['HELLO_PLOTLY'])
-        with open(src_path + '/.sandbox/interactive/03_hello_scipy.py', "w") as out:
-            out.write(app.config['HELLO_SCIPY'])
-        with open(src_path + '/.sandbox/interactive/04_hello_pytorch.py', "w") as out:
-            out.write(app.config['HELLO_PYTORCH'])
-        # terminal
-        os.makedirs(src_path + '/.sandbox/terminal', exist_ok=True)
-        with open(src_path + '/.sandbox/terminal/01_hello_tensorflow.py', "w") as out:
-            out.write(app.config['HELLO_TENSORFLOW'])
-        with open(src_path + '/.sandbox/terminal/02_hello_talib.py', "w") as out:
-            out.write(app.config['HELLO_TALIB'])
-        with open(src_path + '/.sandbox/terminal/03_hello_statsmodel.py', "w") as out:
-            out.write(app.config['HELLO_STATSMODEL'])
-        with open(src_path + '/.sandbox/terminal/04_hello_quandl.py', "w") as out:
-            out.write(app.config['HELLO_QUANDL'])
-        with open(src_path + '/.sandbox/terminal/05_hello_caffe2.py', "w") as out:
-            out.write(app.config['HELLO_CAFFE2'])
         sp.call("cd " + src_path + ";" + app.config['GIT_INIT'], shell=True)
     else:
         if os.path.isdir(src_template):
@@ -69,6 +47,28 @@ def prepare_python_project(uid, sid):
         os.makedirs(theia_config_path + '/.theia', exist_ok=True)
         with open(theia_config_path + "/.theia/launch.json", "w") as out:
             out.write(app.config['DEBUG_SETTING'] % sid)
+        # interactive
+        os.makedirs(theia_config_path + '/.sandbox/interactive', exist_ok=True)
+        with open(theia_config_path + '/.sandbox/interactive/01_hello_matplotlib.py', "w") as out:
+            out.write(app.config['HELLO_MATPLOTLIB'])
+        with open(theia_config_path + '/.sandbox/interactive/02_hello_plotly.py', "w") as out:
+            out.write(app.config['HELLO_PLOTLY'])
+        with open(theia_config_path + '/.sandbox/interactive/03_hello_scipy.py', "w") as out:
+            out.write(app.config['HELLO_SCIPY'])
+        with open(theia_config_path + '/.sandbox/interactive/04_hello_pytorch.py', "w") as out:
+            out.write(app.config['HELLO_PYTORCH'])
+        # terminal
+        os.makedirs(theia_config_path + '/.sandbox/terminal', exist_ok=True)
+        with open(theia_config_path + '/.sandbox/terminal/01_hello_tensorflow.py', "w") as out:
+            out.write(app.config['HELLO_TENSORFLOW'])
+        with open(theia_config_path + '/.sandbox/terminal/02_hello_talib.py', "w") as out:
+            out.write(app.config['HELLO_TALIB'])
+        with open(theia_config_path + '/.sandbox/terminal/03_hello_statsmodel.py', "w") as out:
+            out.write(app.config['HELLO_STATSMODEL'])
+        with open(theia_config_path + '/.sandbox/terminal/04_hello_quandl.py', "w") as out:
+            out.write(app.config['HELLO_QUANDL'])
+        with open(theia_config_path + '/.sandbox/terminal/05_hello_caffe2.py', "w") as out:
+            out.write(app.config['HELLO_CAFFE2'])
 
 
 def run_container(uid, sid, port):
@@ -94,6 +94,7 @@ def run_container(uid, sid, port):
                 volumes={
                     app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid + '/': {'bind': '/home/project/' + sid + '/', 'mode': 'rw'},
                     app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid + '/.theia/launch.json': {'bind': '/home/project/.theia/launch.json', 'mode': 'rw'},
+                    app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid + '/.sandbox': {'bind': '/home/project/.sandbox', 'mode': 'rw'},
                     app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid + '/': {'bind': '/home/theia/.theia', 'mode': 'rw'}
                 },
                 mem_limit="3g",
