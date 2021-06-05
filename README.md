@@ -6,6 +6,7 @@
 ```
 git clone https://github.com/juouyang-aicots/api4theia.git
 cd api4theia/
+sudo apt install python3-venv
 python3 -m venv venv/
 source venv/bin/activate
 venv/bin/pip install -U pip
@@ -33,9 +34,17 @@ python -m pytest
 ```
 
 
-## Install as systemd service
+## Install systemd service
 
 ```
 cd api4theia/scripts/
-bash install_systemd_services.sh
+sudo bash install_systemd_services.sh
+```
+
+
+## Remove systemd service
+
+```
+cd api4theia/scripts/
+sudo bash remove_systemd_services.sh
 ```

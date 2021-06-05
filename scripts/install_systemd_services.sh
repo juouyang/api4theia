@@ -1,3 +1,4 @@
+#!/bin/bash
 
 WORKING_DIR="$(dirname "$PWD")"
 cat <<EOF > api4theia.service
