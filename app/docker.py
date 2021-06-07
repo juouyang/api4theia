@@ -135,7 +135,7 @@ def get_container_status(uid, sid):
         else:
             return "starting"
     else:
-        return "container not found"
+        return "none"
 
 
 def remove_container(uid, sid):

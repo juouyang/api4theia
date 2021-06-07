@@ -255,8 +255,8 @@ def get_ide_without_check(uid, sid):
         http_code = 200
     if (rc == "starting"):
         http_code = 202
-    if (rc == "container not found"):
-        http_code = 404
+    if (rc == "none"):
+        http_code = 200
     return jsonify({'status': rc}), http_code
 
 
