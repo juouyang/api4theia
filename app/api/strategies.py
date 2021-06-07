@@ -5,6 +5,7 @@ from app.models import Users, Strategies, Ports
 import shortuuid
 from urllib.parse import unquote
 from ..docker import *
+import re
 
 
 @api.route('/users', methods=['GET'])
@@ -158,10 +159,14 @@ def update_strategy(sid):
         abort(400)
     s = strategy_list[0]
     old_name = s['name']
-    new_name = request.json.get('name', s['name'])
-    s['name'] = unquote(new_name)
-    Strategies.save_strategies()
-    change_strategy_name(s['uid'], sid, old_name, s['name'])
+    new_name = unquote(request.json.get('name', s['name']))
+    if re.search('^[\w\-. ]+$', new_name):
+        try:
+            change_strategy_name(s['uid'], sid, old_name, new_name)
+            s['name'] = new_name
+            Strategies.save_strategies()
+        except OSError:
+            pass
     return jsonify({'strategy': s})
 
 

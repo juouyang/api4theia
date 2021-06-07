@@ -21,6 +21,8 @@ def sync_containers_status():
 def change_strategy_name(uid, sid, oldname, newname):
     app = current_app._get_current_object()
     src_path = app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid
+    if (not os.path.exists(src_path)):
+        prepare_python_project(uid, sid)
     old_file = os.path.join(src_path, oldname + '.py')
     new_file = os.path.join(src_path, newname + '.py')
     shutil.move(old_file, new_file)

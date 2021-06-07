@@ -218,7 +218,7 @@ class APITestCase(unittest.TestCase):
         assert response.headers["Content-Type"] == "application/json"
         assert response.status_code == 200
         resp_body = response.json
-        assert resp_body['name'] == "//////"
+        assert resp_body['name'] == "my_strategy_abc"
 
         response = self.client.delete("/api/v1.0/strategies/" + str(created_sid),
                                       headers={
