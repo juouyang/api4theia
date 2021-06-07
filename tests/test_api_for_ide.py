@@ -19,7 +19,7 @@ class API4IDETestCase(unittest.TestCase):
         self.app_context.pop()
 
     def test_ide(self):
-        sp.call("docker stop uid-000000-sid-000000", shell=True)
+        sp.call("docker stop $(docker -aq -f name=uid-000000-sid-000000)", shell=True)
 
         response = self.client.get("/api/v1.0/strategy/uid-000000/sid-000000/status")
         assert response.headers["Content-Type"] == "application/json"
@@ -63,7 +63,7 @@ class API4IDETestCase(unittest.TestCase):
         assert response.status_code == 200
 
     def test_multiple_start_ide_1(self):
-        for i in range(9):
+        for i in range(3):
             uID = "uid-" + str(random.randrange(1, 30000)).zfill(6)
             sID = "sid-" + str(random.randrange(1, 30000)).zfill(6)
             response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/start")
@@ -89,7 +89,7 @@ class API4IDETestCase(unittest.TestCase):
             assert response.status_code == 200
 
     def test_multiple_start_ide_2(self):
-        for i in range(9):
+        for i in range(3):
             uID = "uid-" + str(random.randrange(30001, 60000)).zfill(6)
             sID = "sid-" + str(random.randrange(30001, 60000)).zfill(6)
             response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/start")
@@ -115,7 +115,7 @@ class API4IDETestCase(unittest.TestCase):
             assert response.status_code == 200
 
     def test_multiple_start_ide_3(self):
-        for i in range(9):
+        for i in range(3):
             uID = "uid-" + str(random.randrange(60001, 90000)).zfill(6)
             sID = "sid-" + str(random.randrange(60001, 90000)).zfill(6)
             response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/start")
@@ -132,6 +132,35 @@ class API4IDETestCase(unittest.TestCase):
                     break
             assert ide_status == "started"
 
+            response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/stop")
+            assert response.headers["Content-Type"] == "application/json"
+            assert response.status_code == 200
+
+            response = self.client.delete("/api/v1.0/strategies/" + uID + "/" + sID)
+            assert response.headers["Content-Type"] == "application/json"
+            assert response.status_code == 200
+
+    def test_get_all_ide_status(self):
+        uID = "uid-999999"
+        sp.call("docker stop $(docker ps -aq -f name=" + uID + ")", shell=True)
+
+        for sID in ["sid-000001", "sid-000002", "sid-000003"]:
+            response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/start")
+            assert response.headers["Content-Type"] == "application/json"
+            assert response.status_code == 202
+
+        response = self.client.get("/api/v1.0/strategies/" + uID + "/status")
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.status_code == 200
+        resp_body = response.json
+        assert resp_body["result"] == True
+        assert len(resp_body["ide"]) == 3
+        for i in resp_body["ide"]:
+            assert 63000 <= int(i["port"]) <= 63099
+            assert i["sID"] in ["sid-000001", "sid-000002", "sid-000003"]
+
+
+        for sID in ["sid-000001", "sid-000002", "sid-000003"]:
             response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/stop")
             assert response.headers["Content-Type"] == "application/json"
             assert response.status_code == 200

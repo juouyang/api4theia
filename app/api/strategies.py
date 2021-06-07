@@ -249,7 +249,7 @@ def start_ide_without_check(uid, sid):
 
 @api.route('/strategy/<uid>/<sid>/status', methods=['GET'])
 def get_ide_without_check(uid, sid):
-    """Get IDE for one strategy, return 200, 202, 404 or 500
+    """Get status of IDE for one strategy, return 200, 202, 404 or 500
 
     $ curl -i -X GET -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/status
 
@@ -261,6 +261,20 @@ def get_ide_without_check(uid, sid):
     if (rc['status'] == "starting"):
         http_code = 202
     if (rc['status'] == "none"):
+        http_code = 200
+    return jsonify(rc), http_code
+
+
+@api.route('/strategies/<uid>/status', methods=['GET'])
+def get_all_ide_without_check(uid):
+    """Get IDE status for one strategy, return 200 or 500
+
+    $ curl -i -X GET -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/status
+
+    """
+    rc = get_all_container_status(uid)
+    http_code = 500
+    if (rc["result"] == True):
         http_code = 200
     return jsonify(rc), http_code
 
