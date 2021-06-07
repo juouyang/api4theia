@@ -129,13 +129,15 @@ def get_container_status(uid, sid):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         result = sock.connect_ex(("127.0.0.1", int(port)))
         if result == 0:
-            response = requests.get("https://127.0.0.1:" + str(port), verify=False)
-            if response.status_code == 200 or response.status_code == 401:
-                return "started"
-            else:
-                return "starting"
-        else:
-            return "starting"
+            try:
+                response = requests.get("https://127.0.0.1:" + str(port), verify=False)
+                if response.status_code == 200 or response.status_code == 401:
+                    return "started"
+                else:
+                    return "starting"
+            except:
+                pass
+        return "starting"
     else:
         return "none"
 
