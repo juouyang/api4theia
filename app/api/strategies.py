@@ -256,13 +256,13 @@ def get_ide_without_check(uid, sid):
     """
     rc = get_container_status(uid, sid)
     http_code = 500
-    if (rc == "started"):
+    if (rc['status'] == "started"):
         http_code = 200
-    if (rc == "starting"):
+    if (rc['status'] == "starting"):
         http_code = 202
-    if (rc == "none"):
+    if (rc['status'] == "none"):
         http_code = 200
-    return jsonify({'status': rc}), http_code
+    return jsonify(rc), http_code
 
 
 @api.route('/strategy/<uid>/<sid>/stop', methods=['PUT'])

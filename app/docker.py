@@ -132,14 +132,12 @@ def get_container_status(uid, sid):
             try:
                 response = requests.get("https://127.0.0.1:" + str(port), verify=False)
                 if response.status_code == 200 or response.status_code == 401:
-                    return "started"
-                else:
-                    return "starting"
+                    return {'status': "started", "port": port}
             except:
                 pass
-        return "starting"
+        return {'status': "starting", "port": port}
     else:
-        return "none"
+        return {'status': "none"}
 
 
 def remove_container(uid, sid):
