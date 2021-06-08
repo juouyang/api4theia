@@ -2,13 +2,14 @@ from docker.types import containers
 from flask import current_app
 import docker
 import os
-from app.models import Users, Strategies
+from app.models import Users, Strategies, Ports
 import subprocess as sp
 import shortuuid
 import socket
 import requests
 import shutil
 import glob
+import threading
 
 client = docker.from_env()
 
@@ -120,23 +121,25 @@ def run_container(uid, sid, port):
         except:
             return "cannot start conatiner, maybe port: %i is used by other application" % port
     else:
-        return "duplicate call"
+        return "container exist"
 
 
 def get_container_status(uid, sid):
     if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) != 0:
-        container = client.containers.get(uid + "-" + sid)
-        port = container.ports['443/tcp'][0]['HostPort']
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex(("127.0.0.1", int(port)))
-        if result == 0:
-            try:
+        try:
+            container = client.containers.get(uid + "-" + sid)
+            port = container.ports['443/tcp'][0]['HostPort']
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(("127.0.0.1", int(port)))
+            sock.shutdown(2)
+            if result == 0:
                 response = requests.get("https://127.0.0.1:" + str(port), verify=False)
                 if response.status_code == 200 or response.status_code == 401:
                     return {'status': "started", "port": port}
-            except:
-                pass
-        return {'status': "starting", "port": port}
+            return {'status': "processing", "port": port}
+        except:
+            pass
+        return {'status': "processing"}
     else:
         return {'status': "none"}
 
@@ -163,21 +166,32 @@ def get_all_container_status(uid):
     return rc
 
 
+def stop_container_thread(uid, sid):
+    container = client.containers.get(uid + "-" + sid)
+    port = container.ports['443/tcp'][0]['HostPort']
+    container.stop(
+        timeout=3
+    )
+    try:
+        port = int(port)
+        if (60000 <= port <= 60099) or (63000 <= port <= 63099):
+            Ports.available_ports.append(port)
+    except ValueError:
+        pass
+
+
 def remove_container(uid, sid):
     if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) != 0:
-        container = client.containers.get(uid + "-" + sid)
-        port = container.ports['443/tcp'][0]['HostPort']
-        container.stop(
-            timeout=1
-        )
-        return port
+        t = threading.Thread(target = stop_container_thread, args = (uid, sid))
+        t.start()
+        return "stopping"
     else:
         return "container not found"
 
 
 def cleanup_volume(uid, sid):
-    app = current_app._get_current_object()
     remove_container(uid, sid)
+    app = current_app._get_current_object()
     src_path = app.config['STORAGE_POOL'] + '/strategies/' + uid + '/' + sid
     theia_config_path = app.config['STORAGE_POOL'] + '/theia_config/' + uid + '/' + sid
     shutil.rmtree(src_path, ignore_errors = True)

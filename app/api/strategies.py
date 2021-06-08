@@ -238,7 +238,7 @@ def start_ide_without_check(uid, sid):
     if (len(rc) == app.config['ONETIME_PW_LEN'] or rc == ""):
         Ports.available_ports.remove(port)
         return jsonify({'port': port, 'onetime_pw': rc}), 202
-    if (rc == "duplicate call"):
+    if (rc == "container exist"):
         return rc, 304
     if (rc == "docker.errors.ImageNotFound"):
         return rc, 404
@@ -249,18 +249,14 @@ def start_ide_without_check(uid, sid):
 
 @api.route('/strategy/<uid>/<sid>/status', methods=['GET'])
 def get_ide_without_check(uid, sid):
-    """Get status of IDE for one strategy, return 200, 202, 404 or 500
+    """Get status of IDE for one strategy, return 200 or 500
 
     $ curl -i -X GET -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/status
 
     """
     rc = get_container_status(uid, sid)
     http_code = 500
-    if (rc['status'] == "started"):
-        http_code = 200
-    if (rc['status'] == "starting"):
-        http_code = 202
-    if (rc['status'] == "none"):
+    if (rc['status'] in ["started", "processing", "none"] ):
         http_code = 200
     return jsonify(rc), http_code
 
@@ -281,7 +277,7 @@ def get_all_ide_without_check(uid):
 
 @api.route('/strategy/<uid>/<sid>/stop', methods=['PUT'])
 def stop_ide_without_check(uid, sid):
-    """Stop IDE for one strategy, return 200, 404 or 500
+    """Stop IDE for one strategy, return 200, 202 or 500
 
     $ curl -i -X PUT -k https://127.0.0.1:5000/api/v1.0/strategy/${USER_ID}/${STRATEGY_ID}/stop
 
@@ -289,14 +285,9 @@ def stop_ide_without_check(uid, sid):
     app = current_app._get_current_object()
     rc = remove_container(uid, sid)
     if (rc == "container not found"):
-        return rc, 404
-    try:
-        port = int(rc)
-        if (not app.config['TESTING'] and 60000 <= port <= 60099) or (app.config['TESTING'] and 63000 <= port <= 63099):
-            Ports.available_ports.append(port)
-            return jsonify({'result': True})
-    except ValueError:
-        return rc, 500
+        return jsonify({'result': True}), 200
+    if (rc == "stopping"):
+        return jsonify({"status": "stopping"}), 202
     return rc, 500
 
 

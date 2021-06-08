@@ -101,11 +101,12 @@
                 <span class="default"></span>
             </li>
         </ul>
-        <p class="docstring">Start IDE for one strategy, return 202, 304, 404 or 500<br>
+        <p class="docstring">Start IDE for one strategy, return 202, 304 or 500<br>
             <br>
             $ uID=uid-000000; sID=sid-000000; curl -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/start"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/start</a><br>
 <pre><code>
+202
 {
     "onetime_pw":"123456789012345678",
     "port":60000
@@ -132,11 +133,12 @@
                 <span class="default"></span>
             </li>
         </ul>
-        <p class="docstring">Stop IDE for one strategy, return 200, 202, 404 or 500<br>
+        <p class="docstring">Status of IDE for one strategy, return 200 or 500<br>
             <br>
             $ uID=uid-000000; sID=sid-000000; curl -X GET -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/status"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/status</a><br>
 <pre><code>
+200
 {
     "status":"starting",
     "port":60000
@@ -144,6 +146,7 @@
 </code>
 </pre>
 <pre><code>
+200
 {
     "status":"started",
     "port":60000
@@ -151,6 +154,7 @@
 </code>
 </pre>
 <pre><code>
+200
 {
     "status":"none"
 }
@@ -172,11 +176,12 @@
                 <span class="default"></span>
             </li>
         </ul>
-        <p class="docstring">Stop IDE for one strategy, return 200 or 500<br>
+        <p class="docstring">Status of IDE(s) for one user, return 200 or 500<br>
             <br>
             $ uID=uid-000000; curl -X GET -k <a href="/api/v1.0/strategies/$%7BuID%7D/status"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategies/${uID}/status</a><br>
 <pre><code>
+200
 {
     "result":true,
     "ide":[
@@ -195,6 +200,7 @@
 </code>
 </pre>
 <pre><code>
+200
 {
     "result":true,
     "ide":[
@@ -222,13 +228,21 @@
                 <span class="default"></span>
             </li>
         </ul>
-        <p class="docstring">Stop IDE for one strategy, return 200, 404 or 500<br>
+        <p class="docstring">Stop IDE for one strategy, return 200, 202 or 500<br>
             <br>
             $ uID=uid-000000; sID=sid-000000; curl -X PUT -k <a href="/api/v1.0/strategy/$%7BuID%7D/$%7BsID%7D/stop"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategy/${uID}/${sID}/stop</a><br>
 <pre><code>
+200
 {
     "result":true,
+}
+</code>
+</pre>
+<pre><code>
+202
+{
+    "status": "stopping"
 }
 </code>
 </pre>
@@ -257,6 +271,7 @@
             $ uID=uid-000000; sID=sid-000000; curl -X DELETE -k <a href="/api/v1.0/strategies/$%7BuID%7D/$%7BsID%7D"
                 rel="noopener">https://127.0.0.1:5000/api/v1.0/strategies/${uID}/${sID}</a><br>
 <pre><code>
+200
 {
     "result":true,
 }

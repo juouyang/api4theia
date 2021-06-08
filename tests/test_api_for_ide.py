@@ -19,7 +19,7 @@ class API4IDETestCase(unittest.TestCase):
         self.app_context.pop()
 
     def test_ide(self):
-        sp.call("docker stop $(docker -aq -f name=uid-000000-sid-000000)", shell=True)
+        sp.call("docker stop --time 1 $(docker ps -aq -f name=uid-000000-sid-000000)", shell=True)
 
         response = self.client.get("/api/v1.0/strategy/uid-000000/sid-000000/status")
         assert response.headers["Content-Type"] == "application/json"
@@ -35,14 +35,13 @@ class API4IDETestCase(unittest.TestCase):
         theia_port = resp_body['port']
 
         try:
-            ide_status = "starting"
             while (True):
                 response = self.client.get("/api/v1.0/strategy/uid-000000/sid-000000/status")
                 if (response.status_code == 200):
                     resp_body = response.json
                     ide_status = resp_body['status']
-                    break
-            assert ide_status == "started"
+                    if ide_status == "started":
+                        break
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             result = sock.connect_ex((self.app.config['FQDN'], int(theia_port)))
@@ -56,7 +55,14 @@ class API4IDETestCase(unittest.TestCase):
         finally:
             response = self.client.put("/api/v1.0/strategy/uid-000000/sid-000000/stop")
             assert response.headers["Content-Type"] == "application/json"
-            assert response.status_code == 200
+            assert response.status_code == 202
+            while (True):
+                response = self.client.get("/api/v1.0/strategy/uid-000000/sid-000000/status")
+                if (response.status_code == 200):
+                    resp_body = response.json
+                    ide_status = resp_body['status']
+                    if (ide_status == "none"):
+                        break
 
         response = self.client.delete("/api/v1.0/strategies/uid-000000/sid-000000")
         assert response.headers["Content-Type"] == "application/json"
@@ -71,18 +77,25 @@ class API4IDETestCase(unittest.TestCase):
             assert response.status_code == 202
             resp_body = response.json
 
-            ide_status = "starting"
             while (True):
                 response = self.client.get("/api/v1.0/strategy/" + uID + "/" + sID + "/status")
                 if (response.status_code == 200):
                     resp_body = response.json
                     ide_status = resp_body['status']
-                    break
-            assert ide_status == "started"
+                    if (ide_status == "started"):
+                        break
 
             response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/stop")
             assert response.headers["Content-Type"] == "application/json"
-            assert response.status_code == 200
+            assert response.status_code == 202
+
+            while (True):
+                response = self.client.get("/api/v1.0/strategy/" + uID + "/" + sID + "/status")
+                if (response.status_code == 200):
+                    resp_body = response.json
+                    ide_status = resp_body['status']
+                    if (ide_status == "none"):
+                        break
 
             response = self.client.delete("/api/v1.0/strategies/" + uID + "/" + sID)
             assert response.headers["Content-Type"] == "application/json"
@@ -97,18 +110,25 @@ class API4IDETestCase(unittest.TestCase):
             assert response.status_code == 202
             resp_body = response.json
 
-            ide_status = "starting"
             while (True):
                 response = self.client.get("/api/v1.0/strategy/" + uID + "/" + sID + "/status")
                 if (response.status_code == 200):
                     resp_body = response.json
                     ide_status = resp_body['status']
-                    break
-            assert ide_status == "started"
+                    if (ide_status == "started"):
+                        break
 
             response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/stop")
             assert response.headers["Content-Type"] == "application/json"
-            assert response.status_code == 200
+            assert response.status_code == 202
+
+            while (True):
+                response = self.client.get("/api/v1.0/strategy/" + uID + "/" + sID + "/status")
+                if (response.status_code == 200):
+                    resp_body = response.json
+                    ide_status = resp_body['status']
+                    if (ide_status == "none"):
+                        break
 
             response = self.client.delete("/api/v1.0/strategies/" + uID + "/" + sID)
             assert response.headers["Content-Type"] == "application/json"
@@ -123,18 +143,25 @@ class API4IDETestCase(unittest.TestCase):
             assert response.status_code == 202
             resp_body = response.json
 
-            ide_status = "starting"
             while (True):
                 response = self.client.get("/api/v1.0/strategy/" + uID + "/" + sID + "/status")
                 if (response.status_code == 200):
                     resp_body = response.json
                     ide_status = resp_body['status']
-                    break
-            assert ide_status == "started"
+                    if (ide_status == "started"):
+                        break
 
             response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/stop")
             assert response.headers["Content-Type"] == "application/json"
-            assert response.status_code == 200
+            assert response.status_code == 202
+
+            while (True):
+                response = self.client.get("/api/v1.0/strategy/" + uID + "/" + sID + "/status")
+                if (response.status_code == 200):
+                    resp_body = response.json
+                    ide_status = resp_body['status']
+                    if (ide_status == "none"):
+                        break
 
             response = self.client.delete("/api/v1.0/strategies/" + uID + "/" + sID)
             assert response.headers["Content-Type"] == "application/json"
@@ -163,7 +190,15 @@ class API4IDETestCase(unittest.TestCase):
         for sID in ["sid-000001", "sid-000002", "sid-000003"]:
             response = self.client.put("/api/v1.0/strategy/" + uID + "/" + sID + "/stop")
             assert response.headers["Content-Type"] == "application/json"
-            assert response.status_code == 200
+            assert response.status_code == 202
+
+            while (True):
+                response = self.client.get("/api/v1.0/strategy/" + uID + "/" + sID + "/status")
+                if (response.status_code == 200):
+                    resp_body = response.json
+                    ide_status = resp_body['status']
+                    if (ide_status == "none"):
+                        break
 
             response = self.client.delete("/api/v1.0/strategies/" + uID + "/" + sID)
             assert response.headers["Content-Type"] == "application/json"
