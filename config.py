@@ -18,7 +18,7 @@ class Config:
         "**/.sandbox\n"
         "**/.Trash*\n"
     )
-    GIT_INIT = "git init;git config user.email 'root@local';git add ./*;git add .gitignore;git commit -m 'first commit'"
+    GIT_INIT = "git init 2>&1 >/dev/null;git config user.email 'root@local';git add ./* 2>&1 >/dev/null;git add .gitignore 2>&1 >/dev/null;git commit -m 'first commit' 2>&1 >/dev/null"
     DEBUG_SETTING = '''
 {"version":"0.2.0","configurations":[{"name":"Aicots: Strategy","type":"python","request":"launch","program":"${workspaceFolder}/%s/__main__.py","console":"integratedTerminal"}]}
     '''
