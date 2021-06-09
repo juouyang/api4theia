@@ -10,6 +10,7 @@ import requests
 import shutil
 import glob
 import threading
+import time
 
 client = docker.from_env()
 
@@ -118,15 +119,15 @@ def run_container(uid, sid, port):
                 }
             )
             return onetime_password
-        except:
-            return "cannot start conatiner, maybe port: %i is used by other application" % port
+        except Exception as e:
+            return str(e) + ", cannot start conatiner at port: %i" % port
     else:
         return "container exist"
 
 
 def get_container_status(uid, sid):
-    if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) != 0:
-        try:
+    try:
+        if len(client.containers.list(all=True, filters={'name': uid + "-" + sid})) != 0:
             container = client.containers.get(uid + "-" + sid)
             port = container.ports['443/tcp'][0]['HostPort']
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -137,11 +138,11 @@ def get_container_status(uid, sid):
                 if response.status_code == 200 or response.status_code == 401:
                     return {'status': "started", "port": port}
             return {'status': "processing", "port": port}
-        except:
-            pass
-        return {'status': "processing"}
-    else:
-        return {'status': "none"}
+        else:
+            return {'status': "none"}
+    except:
+        pass
+    return {'status': "processing"}
 
 
 def get_all_container_status(uid):
@@ -168,14 +169,18 @@ def get_all_container_status(uid):
 
 def stop_container_thread(uid, sid):
     container = client.containers.get(uid + "-" + sid)
+    while True:
+        if container.status == "running":
+            break
+        time.sleep(0.5)
     port = container.ports['443/tcp'][0]['HostPort']
     container.stop(
-        timeout=3
+        timeout=1
     )
     try:
         port = int(port)
         if (60000 <= port <= 60099) or (63000 <= port <= 63099):
-            Ports.available_ports.append(port)
+            Ports.release_port(port)
     except ValueError:
         pass
 

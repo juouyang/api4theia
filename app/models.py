@@ -1,7 +1,7 @@
 import json
 from flask import current_app
 import random
-import socket
+import threading
 
 
 class Users:
@@ -22,24 +22,23 @@ class Strategies:
                 json.dump(Strategies.strategies, f)
 
 
+lock = threading.Lock()
+
 class Ports:
     available_ports = []
 
     def get_unused_port():
         port = -1
-        result = 0
-        while result == 0:
-            if len(Ports.available_ports) == 0:
-                port = -1
-                break
-            port = random.choice(Ports.available_ports)
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            result = sock.connect_ex(("127.0.0.1", port))
-            if result == 0:
+        with lock:
+            if len(Ports.available_ports) != 0:
+                port = random.choice(Ports.available_ports)
                 Ports.available_ports.remove(port)
         return port
 
-    def save_ports():
+    def release_port(port):
+        Ports.available_ports.append(port)
+
+    def save_ports(): # function that no one called
         if (current_app.config['DB'] == 'Json'):
             with open('migrations/ports.json', 'w') as f:
                 json.dump(Ports.available_ports, f)

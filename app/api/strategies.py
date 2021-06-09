@@ -236,15 +236,15 @@ def start_ide_without_check(uid, sid):
     port = Ports.get_unused_port()
     rc = run_container(uid, sid, port)
     if (len(rc) == app.config['ONETIME_PW_LEN'] or rc == ""):
-        Ports.available_ports.remove(port)
-        return jsonify({'port': port, 'onetime_pw': rc}), 202
+        return jsonify({'port': port, 'onetime_pw': rc, 'message': ""}), 202
+    Ports.release_port(port)
     if (rc == "container exist"):
-        return rc, 304
+        return jsonify({'result': True, 'message': rc}), 304
     if (rc == "docker.errors.ImageNotFound"):
-        return rc, 404
+        return jsonify({'result': False, 'message': rc}), 404
     if (port == -1):
-        return "cannot find unused port", 503
-    return rc, 500
+        return jsonify({'result': False, 'message': "cannot find unused port"}), 503
+    return jsonify({'result': False, 'message': rc}), 500
 
 
 @api.route('/strategy/<uid>/<sid>/status', methods=['GET'])
