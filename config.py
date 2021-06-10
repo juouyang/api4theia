@@ -155,7 +155,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     API_PORT = 5000
-    CONTAINER_PORT = 30000
+    CONTAINER_PORT = 30000 # 30000 ~ 30107 (12 * 9)
     WTF_CSRF_ENABLED = False
     LOG_LEVEL = 0 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
     FQDN = "pve.dev.net"
@@ -163,8 +163,8 @@ class DevelopmentConfig(Config):
     KEY_FILE = 'app/ssl/pve.dev.net.key'
     TEMPLATE_PROJECT = basedir + "/migrations/Doquant/Strategy"
     STORAGE_POOL = "/media/nfs/theia"
-    MAX_CONTAINER_NUM = 100
-    MAX_STRATEGY_NUM = 100
+    MAX_CONTAINER_NUM = 9
+    MAX_STRATEGY_NUM = 9
     ONETIME_PW_ENABLED = False
 
 
@@ -180,7 +180,7 @@ class TestingConfig(DevelopmentConfig):
 
 class ProductionConfig(Config):
     API_PORT = 443
-    CONTAINER_PORT = 30000
+    CONTAINER_PORT = 30000 # 30000 ~ 30035 (12 * 3)
     WTF_CSRF_ENABLED = False
     LOG_LEVEL = 40 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
     FQDN = "dost1.doquant.com"
