@@ -5,15 +5,11 @@ https://drive.google.com/file/d/13JaBX5NRyG7zzX2ajtHPEhRaFJYPHNMO/view?usp=shari
 ## Prepare
 
 ```
-git clone https://github.com/juouyang-aicots/api4theia.git
 cd api4theia/
-sudo apt install python3-venv
 python3 -m venv venv/
 source venv/bin/activate
 venv/bin/pip install -U pip
 venv/bin/pip install -r requirements.txt
-cd api4theia/migrations/
-bash init_strategy_template.sh
 ```
 
 
@@ -23,7 +19,7 @@ bash init_strategy_template.sh
 cd api4theia/
 source venv/bin/activate
 export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(16))')
-sudo --preserve-env=SECRET_KEY ./api4theia.py
+./api4theia.py
 ```
 
 

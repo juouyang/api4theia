@@ -3,8 +3,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     DB = 'Json'
-    SECRET_KEY = os.environ.get("SECRET_KEY") or '85114481'
-    DOCKER_IMAGE = "theia-python:aicots"
+    SECRET_KEY = os.environ.get("SECRET_KEY") or 'CHANGE_THIS_DEFAULT_SECRET'
+    DOCKER_IMAGE = "theia-python:dev"
     ONETIME_PW_ENABLED = True
     ONETIME_PW_LEN = 18
     GIT_IGNORE = (
@@ -20,7 +20,7 @@ class Config:
     )
     GIT_INIT = "git init 2>&1 >/dev/null;git config user.email 'root@local';git add ./* 2>&1 >/dev/null;git add .gitignore 2>&1 >/dev/null;git commit -m 'first commit' 2>&1 >/dev/null"
     DEBUG_SETTING = '''
-{"version":"0.2.0","configurations":[{"name":"Aicots: Strategy","type":"python","request":"launch","program":"${workspaceFolder}/%s/__main__.py","console":"integratedTerminal"}]}
+{"version":"0.2.0","configurations":[{"name":"PROJECT_NAME","type":"python","request":"launch","program":"${workspaceFolder}/%s/__main__.py","console":"integratedTerminal"}]}
     '''
     HELLO_MATPLOTLIB = (
         "import matplotlib\n"
@@ -146,7 +146,7 @@ class Config:
         "mydata = workspace.FetchBlob('mydata')\n"
         "print(mydata)\n"
     )
-    PACK_CMD = "curl -s https://raw.githubusercontent.com/juouyang-aicots/py2docker/main/build.sh | bash"
+    PACK_CMD = "echo Packing... && sleep 30 && echo Packed finished."
 
     @staticmethod
     def init_app(app):
@@ -161,8 +161,8 @@ class DevelopmentConfig(Config):
     FQDN = "pve.dev.net"
     CRT_FILE = 'app/ssl/pve.dev.net.crt'
     KEY_FILE = 'app/ssl/pve.dev.net.key'
-    TEMPLATE_PROJECT = basedir + "/migrations/Doquant/Strategy"
-    STORAGE_POOL = "/media/nfs/theia"
+    TEMPLATE_PROJECT = basedir + "/migrations/templates/dev"
+    STORAGE_POOL = "/tmp/theia-dev"
     MAX_CONTAINER_NUM = 9
     MAX_STRATEGY_NUM = 9
     ONETIME_PW_ENABLED = False
@@ -183,11 +183,11 @@ class ProductionConfig(Config):
     CONTAINER_PORT = 30000 # 30000 ~ 30035 (12 * 3)
     WTF_CSRF_ENABLED = False
     LOG_LEVEL = 40 # ERROR=40, https://docs.python.org/3/howto/logging.html#logging-levels
-    FQDN = "dost1.doquant.com"
-    CRT_FILE = '/etc/letsencrypt/live/dost1.doquant.com/fullchain.pem'
-    KEY_FILE = '/etc/letsencrypt/live/dost1.doquant.com/privkey.pem'
-    TEMPLATE_PROJECT = basedir + "/migrations/Doquant/Strategy"
-    STORAGE_POOL = "/media/aicots/ssd/theia"
+    FQDN = "THIS_IS_YOUR_PRODUCTION_FQDN"
+    CRT_FILE = 'THIS_IS_THE_SSL_CRT_OF_YOUR_FQDN'
+    KEY_FILE = 'THIS_IS_THE_SSL_KEY_OF_YOUR_FQDN'
+    TEMPLATE_PROJECT = basedir + "/migrations/templates/prod"
+    STORAGE_POOL = "/tmp/theia-prod"
     MAX_CONTAINER_NUM = 3
     MAX_STRATEGY_NUM = 100
     ONETIME_PW_ENABLED = False

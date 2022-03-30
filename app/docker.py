@@ -41,16 +41,9 @@ def prepare_python_project(uid, sid):
         os.makedirs(src_path, exist_ok=True)
         if os.path.isdir(src_template):
             sp.run(['cp', '-r'] + glob.glob(src_template + '/*') + [src_path])
-            old_file = os.path.join(src_path, "Your_Strategy.py")
-            new_file = os.path.join(src_path, sname + '.py')
-            os.rename(old_file, new_file)
         with open(src_path + "/.gitignore", "w") as out:
             out.write(app.config['GIT_IGNORE'])
         sp.call(app.config['GIT_INIT'], shell=True, cwd = src_path)
-    else:
-        if os.path.isdir(src_template):
-            sp.call(['cp', '-rf', src_template + "/reference/", src_path], shell=False)
-            sp.call(['cp', '-rf', src_template + "/__main__.py", src_path], shell=False)
 
     theia_config_path = app.config['STORAGE_POOL'] + \
         '/theia_config/' + uid + '/' + sid
